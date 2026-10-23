@@ -12,7 +12,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
     <!-- Google Fonts & FontAwesome -->
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <style>
@@ -21,6 +21,8 @@
             --gold: #fde047;
             --slate: #020617;
             --red: #ef4444;
+            --green: #22c55e;
+            --jdp-gold-gradient: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
         }
 
         body, html { 
@@ -32,7 +34,7 @@
             font-family: 'Inter', sans-serif; 
         }
 
-        /* --- TELA DE BLOQUEIO HELENA INDUSTRIAL --- */
+        /* --- TELA DE BLOQUEIO / ENTRADA DE ID SUPREME --- */
         #tela-seguranca {
             position: fixed;
             inset: 0;
@@ -43,20 +45,26 @@
             align-items: center;
             justify-content: center;
             transition: opacity 0.5s ease, visibility 0.5s ease;
+            padding: 20px;
         }
 
         .painel-bloqueio {
             text-align: center;
-            max-width: 400px;
-            padding: 20px;
+            max-width: 380px;
+            width: 100%;
+            background: #0f172a;
+            border: 2px solid var(--cyan);
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 0 30px rgba(6, 182, 212, 0.25);
         }
 
         .img-bloqueio {
-            max-width: 280px;
-            border-radius: 15px;
-            border: 2px solid var(--cyan);
-            box-shadow: 0 0 30px rgba(6, 182, 212, 0.2);
-            margin: 0 auto 20px auto;
+            max-width: 120px;
+            border-radius: 12px;
+            border: 2px solid var(--gold);
+            margin: 0 auto 15px auto;
+            display: block;
         }
 
         .terminal-status {
@@ -65,9 +73,44 @@
             letter-spacing: 2px;
             padding: 10px;
             border: 1px solid rgba(6, 182, 212, 0.3);
-            background: rgba(0, 0, 0, 0.4);
-            border-radius: 5px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 8px;
             margin-top: 15px;
+            color: var(--gold);
+            text-transform: uppercase;
+        }
+
+        .input-id-mapa {
+            width: 100%;
+            padding: 14px;
+            margin-top: 15px;
+            border-radius: 10px;
+            border: 2px solid var(--cyan);
+            background: #000;
+            color: var(--gold);
+            text-transform: uppercase;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            font-size: 1.1rem;
+            text-align: center;
+            outline: none;
+            letter-spacing: 2px;
+        }
+
+        .btn-conectar-mapa {
+            width: 100%;
+            padding: 14px;
+            margin-top: 10px;
+            background: var(--jdp-gold-gradient);
+            border: none;
+            border-radius: 10px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            cursor: pointer;
+            color: #000;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(191, 149, 63, 0.4);
         }
 
         /* --- ALERTA VISUAL DE BUZINA (HUD) --- */
@@ -126,11 +169,6 @@
             border-color: var(--gold);
             color: var(--gold);
             transform: scale(1.1);
-            box-shadow: 0 0 20px rgba(253, 224, 71, 0.6);
-        }
-
-        #btn-buzina-mapa:active {
-            transform: scale(0.9);
         }
 
         /* --- MAPA E COMPONENTES --- */
@@ -159,7 +197,6 @@
             align-items: center; 
             justify-content: center; 
             overflow: hidden; 
-            transition: all 0.5s; 
         }
 
         #tv-midia .midia-content { 
@@ -179,7 +216,6 @@
             border-radius: 50%; 
             border: 3px solid var(--gold); 
             box-shadow: 0 0 15px rgba(253, 224, 71, 0.5); 
-            transition: 0.3s; 
         }
 
         .modo-tv #map { height: 0%; opacity: 0; }
@@ -188,30 +224,16 @@
         .hidden { opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; }
         .text-cyan { color: var(--cyan); text-shadow: 0 0 10px var(--cyan); }
         .text-gold { color: var(--gold); text-shadow: 0 0 10px var(--gold); }
-        .text-red-500 { color: var(--red); text-shadow: 0 0 10px var(--red); }
-        .border-red-500 { border-color: var(--red); }
-        .text-yellow-500 { color: var(--gold); text-shadow: 0 0 10px var(--gold); }
-        .border-yellow-500 { border-color: var(--gold); }
-        .text-green-500 { color: #22c55e; text-shadow: 0 0 10px #22c55e; }
-        .border-green-500 { border-color: #22c55e; }
+        .text-red-500 { color: var(--red); }
+        .text-green-500 { color: #22c55e; }
 
         .leaflet-popup-content-wrapper {
             background: #020617 !important;
             border: 2px solid var(--cyan) !important;
             color: #fff !important;
             border-radius: 8px !important;
-            padding: 0px !important;
-            box-shadow: 0 0 15px rgba(6, 182, 212, 0.4) !important;
         }
-        .leaflet-popup-tip {
-            background: var(--cyan) !important;
-        }
-
-        .leaflet-div-icon {
-            background: transparent !important;
-            border: none !important;
-            box-shadow: none !important;
-        }
+        .leaflet-div-icon { background: transparent !important; border: none !important; }
     </style>
 </head>
 <body>
@@ -219,8 +241,8 @@
     <div id="alerta-buzina">
         <div style="font-size: 24px;">🔊</div>
         <div>
-            <h4 class="text-gold" style="margin: 0; font-family: 'Orbitron'; font-size: 14px; letter-spacing: 1px;">MOTOBOY CHEGANDO!</h4>
-            <span class="text-cyan" style="font-size: 11px; font-weight: bold; letter-spacing: 1.5px;">ELE BUZINOU NO PORTÃO</span>
+            <h4 class="text-gold" style="margin: 0; font-family: 'Orbitron'; font-size: 14px;">MOTOBOY CHEGANDO!</h4>
+            <span class="text-cyan" style="font-size: 11px; font-weight: bold;">ELE BUZINOU NO PORTÃO</span>
         </div>
     </div>
 
@@ -228,12 +250,17 @@
         <i class="fa-solid fa-volume-high"></i>
     </div>
 
+    <!-- TELA DE SEGURANÇA E ENTRADA DE ID -->
     <div id="tela-seguranca">
         <div class="painel-bloqueio">
-            <img id="status-img" src="https://raw.githubusercontent.com/pradodalapa-hue/fotos-industrial/main/img/jdp_1779707901946_1776103715509.png" class="img-bloqueio" alt="Bloqueado">
-            <h2 class="text-cyan font-bold text-lg tracking-wider uppercase mb-1" style="font-family: 'Orbitron';">SISTEMA JDP SECURE</h2>
-            <p id="mensagem-seguranca" class="text-xs text-slate-400 uppercase tracking-widest">Iniciando varredura de protocolo...</p>
-            <div id="terminal-log" class="terminal-status text-gold">VERIFICANDO CREDENCIAIS...</div>
+            <img id="status-img" src="https://raw.githubusercontent.com/pradodalapa-hue/fotos-industrial/main/img/jdp_1779707901946_1776103715509.png" class="img-bloqueio" alt="Logo">
+            <h2 class="text-cyan font-bold text-base tracking-wider uppercase mb-1" style="font-family: 'Orbitron';">RASTREIO SUPREME</h2>
+            <p id="mensagem-seguranca" class="text-[11px] text-slate-400 uppercase tracking-widest">DIGITE O ID DO SEU PEDIDO</p>
+            
+            <input type="text" id="inputPedidoID" class="input-id-mapa" placeholder="EX: JDP-XXXX" maxlength="12">
+            <button class="btn-conectar-mapa" onclick="conectarComIDManual()">ACESSAR MAPA</button>
+
+            <div id="terminal-log" class="terminal-status">AGUARDANDO CREDENCIAL...</div>
         </div>
     </div>
 
@@ -253,77 +280,33 @@
         const LOJA_ID = 'LEOVARDIOS_burguer_2026';
                   
         const urlParams = new URLSearchParams(window.location.search);
-        const pedidoID = urlParams.get('pedido');
-
-        const AUDIO_BUZINA_URL = "https://raw.githubusercontent.com/pradodalapa-hue/fotos-industrial/main/media/jdp_1781371308253_Buzina_marca_BZM_para_Motos_1_tom_MP3_160K_.mp3"; 
+        let pedidoID = urlParams.get('pedido');
 
         const telaSeguranca = document.getElementById('tela-seguranca');
         const terminalLog = document.getElementById('terminal-log');
         const mensagemSeguranca = document.getElementById('mensagem-seguranca');
-        const statusImg = document.getElementById('status-img');
+        const inputPedidoID = document.getElementById('inputPedidoID');
         const alertaBuzina = document.getElementById('alerta-buzina');
 
         let map, markerMotoboy, markerDestino;
         let adsCache = ["https://raw.githubusercontent.com/pradodalapa-hue/fotos-industrial/main/img/jdp_1776919033775_Engenheiro_Transparente__1_.png"];
         let adIndex = 0;
         let mapaInicializado = false;
+        let firebaseListener = null;
 
+        const AUDIO_BUZINA_URL = "https://raw.githubusercontent.com/pradodalapa-hue/fotos-industrial/main/media/jdp_1781371308253_Buzina_marca_BZM_para_Motos_1_tom_MP3_160K_.mp3"; 
         let audioCtx = null;
         let audioBuzinaElement = new Audio(AUDIO_BUZINA_URL);
         audioBuzinaElement.preload = "auto";
 
         function inicializarAudioContext() {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
         }
-
         window.addEventListener('click', inicializarAudioContext, { once: false });
-        window.addEventListener('touchstart', inicializarAudioContext, { once: false });
-
-        function emitirSomSintetizado() {
-            try {
-                inicializarAudioContext();
-                if (!audioCtx) return;
-
-                const osc1 = audioCtx.createOscillator();
-                const osc2 = audioCtx.createOscillator();
-                const gainNode = audioCtx.createGain();
-
-                osc1.type = 'sawtooth'; 
-                osc1.frequency.setValueAtTime(440, audioCtx.currentTime); 
-
-                osc2.type = 'sine'; 
-                osc2.frequency.setValueAtTime(880, audioCtx.currentTime); 
-
-                gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-                gainNode.gain.linearRampToValueAtTime(0.15, audioCtx.currentTime + 0.05);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-
-                osc1.connect(gainNode);
-                osc2.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-
-                osc1.start();
-                osc2.start();
-
-                osc1.stop(audioCtx.currentTime + 0.5);
-                osc2.stop(audioCtx.currentTime + 0.5);
-            } catch (err) {
-                console.error("Erro no áudio:", err);
-            }
-        }
-
-        function tocarAudioBuzina() {
-            inicializarAudioContext();
-            audioBuzinaElement.play().catch(() => emitirSomSintetizado());
-        }
 
         function dispararBuzina() {
-            tocarAudioBuzina();
+            audioBuzinaElement.play().catch(() => {});
             alertaBuzina.classList.add('active');
             setTimeout(() => { alertaBuzina.classList.remove('active'); }, 4000);
         }
@@ -333,47 +316,56 @@
             db.ref(`lojas/${LOJA_ID}/motoboy_status`).update({ buzina_trigger: Date.now() });
         }
 
-        // --- VERIFICAÇÃO DE SINCRONIZAÇÃO EM TEMPO REAL ---
+        // Se o usuário digitou o ID manualmente na tela inicial do mapa
+        function conectarComIDManual() {
+            const val = inputPedidoID.value.trim().toUpperCase();
+            if (!val) return alert("DIGITE O ID DO PEDIDO!");
+            pedidoID = val;
+            // Atualiza a URL sem recarregar a página
+            window.history.replaceState({}, '', `?pedido=${pedidoID}`);
+            verificarSeguranca();
+        }
+
+        // Se já veio com o parâmetro ?pedido= na URL, preenche o input automaticamente
+        if (pedidoID) {
+            inputPedidoID.value = pedidoID;
+            verificarSeguranca();
+        }
+
+        // --- VALIDAÇÃO DIRETA EM TEMPO REAL COM O MOTOBOY ---
         function verificarSeguranca() {
             if (!pedidoID || !pedidoID.startsWith('JDP-')) {
-                bloquearAcesso("ACESSO NEGADO", "ID DE PEDIDO INVÁLIDO OU AUSENTE");
+                terminalLog.innerText = "DIGITE UM ID VÁLIDO (JDP-)";
                 return;
             }
 
-            terminalLog.innerText = "SINCRO DE ROTA ATIVA...";
-                                          
-            // Monitora a tabela completa de rastreio e a entrega ativa do motoboy
-            db.ref(`lojas/${LOJA_ID}`).on('value', snap => {
+            terminalLog.innerText = "VERIFICANDO ROTA COM O MOTOBOY...";
+
+            if (firebaseListener) db.ref(`lojas/${LOJA_ID}`).off('value', firebaseListener);
+
+            firebaseListener = db.ref(`lojas/${LOJA_ID}`).on('value', snap => {
                 const loja = snap.val() || {};
                 const rAtivo = loja.rastreio_ativo ? loja.rastreio_ativo[pedidoID] : null;
                 const pConcluido = loja.pedidos_concluidos ? loja.pedidos_concluidos[pedidoID] : null;
                 const pEmEntrega = loja.pedido_em_entrega || {};
 
-                // Se o pedido está explicitamente em rota ativa (no motoboy ou na pista)
+                // Valida se o pedido está ativo na pista ou carregado na moto do motoboy
                 const estaEmRota = (rAtivo && (rAtivo.na_pista === true || rAtivo.status === "em_rota" || rAtivo.status === "PRONTO_PARA_ENTREGA")) || (pEmEntrega.id === pedidoID);
 
                 if (estaEmRota) {
                     liberarAcesso();
                 } else if (pConcluido) {
-                    bloquearAcesso("ENTREGA CONCLUÍDA", "OBRIGADO PELA PREFERÊNCIA!");
+                    terminalLog.innerText = "ENTREGA JÁ CONCLUÍDA!";
+                    telaSeguranca.classList.remove('hidden');
                 } else {
-                    bloquearAcesso("FORA DE ROTA", "AGUARDANDO O MOTOBOY INICIAR A ROTA");
+                    terminalLog.innerText = "AGUARDANDO O MOTOBOY LIBERAR A ROTA";
+                    telaSeguranca.classList.remove('hidden');
                 }
             });
         }
 
-        function bloquearAcesso(titulo, sub) {
-            statusImg.src = "https://raw.githubusercontent.com/pradodalapa-hue/fotos-industrial/main/img/jdp_1779707901946_1776103715509.png";
-            mensagemSeguranca.innerText = sub;
-            terminalLog.innerText = titulo;
-            terminalLog.className = "terminal-status text-red-500 border-red-500";
-            telaSeguranca.classList.remove('hidden');
-        }
-
         function liberarAcesso() {
-            terminalLog.innerText = "ACESSO AUTORIZADO! INICIANDO RASTREIO...";
-            terminalLog.className = "terminal-status text-green-500 border-green-500";
-                                          
+            terminalLog.innerText = "CONECTADO AO MOTOBOY!";
             telaSeguranca.classList.add('hidden');
             inicializarMapa();
         }
@@ -382,13 +374,10 @@
             if (mapaInicializado) return;
             mapaInicializado = true;
 
-            map = L.map('map', {
-                zoomControl: true,
-                attributionControl: false
-            }).setView([-2.9903, -60.0673], 15);
-                
+            map = L.map('map', { zoomControl: true, attributionControl: false }).setView([-2.9903, -60.0673], 15);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
+            // Telemetria do Motoboy
             db.ref(`lojas/${LOJA_ID}/motoboy_status`).on('value', snap => {
                 const pos = snap.val();
                 document.body.classList.toggle('modo-tv', !(pos && pos.online));
@@ -398,21 +387,8 @@
                     const imgDireita = "https://raw.githubusercontent.com/pradodalapa-hue/fotos-industrial/main/img/jdp_1781366116603_1001229381.png";
                     const imgEsquerda = "https://raw.githubusercontent.com/pradodalapa-hue/fotos-industrial/main/img/jdp_1781368263004_Engenheiro_Transparente.png";
                     
-                    let imgAtiva = imgDireita;
-                    let inclinacaoReal = 0;
-                    const angulo = (bearing % 360 + 360) % 360;
-
-                    if (angulo > 180 && angulo <= 360) {
-                        imgAtiva = imgEsquerda;
-                        if (angulo > 270) inclinacaoReal = -15;
-                        else if (angulo < 270) inclinacaoReal = 15;
-                    } else {
-                        imgAtiva = imgDireita;
-                        if (angulo < 90) inclinacaoReal = -15;
-                        else if (angulo > 90) inclinacaoReal = 15;
-                    }
-
-                    const iconHtml = `<img src="${imgAtiva}" style="width: 38px; height: 38px; transform: rotate(${inclinacaoReal}deg); filter: drop-shadow(0 0 5px rgba(6,182,212,0.95)); display: block; background: transparent;">`;
+                    let imgAtiva = bearing > 180 && bearing <= 360 ? imgEsquerda : imgDireita;
+                    const iconHtml = `<img src="${imgAtiva}" style="width: 38px; height: 38px; filter: drop-shadow(0 0 5px rgba(6,182,212,0.95)); display: block; background: transparent;">`;
                     
                     if (!markerMotoboy) {
                         markerMotoboy = L.marker([pos.latitude, pos.longitude], {
@@ -426,44 +402,36 @@
                 }
             });
 
+            // Gatilho de Buzina do Motoboy
             let ultimoBuzinar = null;
             db.ref(`lojas/${LOJA_ID}/motoboy_status/buzina_trigger`).on('value', snap => {
                 const val = snap.val();
-                if (val) {
-                    if (ultimoBuzinar === null) { ultimoBuzinar = val; return; }
-                    if (val !== ultimoBuzinar) {
-                        ultimoBuzinar = val;
-                        dispararBuzina();
-                    }
+                if (val && val !== ultimoBuzinar) {
+                    ultimoBuzinar = val;
+                    dispararBuzina();
                 }
             });
 
+            // Marcador de Destino do Cliente
             db.ref(`lojas/${LOJA_ID}/rastreio_ativo/${pedidoID}`).on('value', snap => {
                 const data = snap.val();
-                                         
                 if (data && data.latDestino && data.lngDestino) {
                     const lat = parseFloat(data.latDestino);
                     const lng = parseFloat(data.lngDestino);
                     const nomeCliente = data.cliente_nome || data.mesa || "CLIENTE";
-                    const enderecoCliente = data.endereco || "RUA NOVA ERA";
+                    const enderecoCliente = data.endereco || "MANAUS";
 
                     const placaConteudo = `
-                        <div style="background:#020617; padding:12px; border-radius:6px; min-width:180px; font-family:'Inter', sans-serif;">
-                            <div style="font-family:'Orbitron'; font-weight:900; color:var(--gold); font-size:11px; border-bottom:1px dashed var(--cyan); padding-bottom:4px; margin-bottom:6px;">
-                                <i class="fas fa-box"></i> ID: ${pedidoID}
-                            </div>
-                            <div style="font-weight:800; font-size:12px; color:#fff; text-transform:uppercase; margin-bottom:4px;">
-                                <i class="fas fa-user" style="color:var(--cyan)"></i> ${nomeCliente.toUpperCase()}
-                            </div>
-                            <div style="font-size:10px; color:#cbd5e1; text-transform:uppercase; line-height:1.3;">
-                                <i class="fas fa-map-marker-alt" style="color:var(--gold)"></i> ${enderecoCliente.toUpperCase()}
-                            </div>
+                        <div style="background:#020617; padding:10px; border-radius:6px; color:#fff;">
+                            <b style="color:var(--gold);">ID: ${pedidoID}</b><br>
+                            <span style="color:var(--cyan);">${nomeCliente.toUpperCase()}</span><br>
+                            <small>${enderecoCliente.toUpperCase()}</small>
                         </div>
                     `;
 
                     if (!markerDestino) {
                         markerDestino = L.marker([lat, lng], {
-                            icon: L.divIcon({ html: '<div style="font-size:32px; filter: drop-shadow(0 0 8px rgba(253,224,71,0.8));">📍</div>', iconSize: [32, 32], iconAnchor: [16, 32] })
+                            icon: L.divIcon({ html: '<div style="font-size:28px;">📍</div>', iconSize: [28, 28], iconAnchor: [14, 28] })
                         }).addTo(map).bindPopup(placaConteudo).openPopup();
                     } else {
                         markerDestino.setLatLng([lat, lng]);
@@ -475,7 +443,7 @@
 
         function motorPublicidade() {
             db.ref(`publicidade/prado_67`).on('value', snap => {
-                if(snap.exists()){ adsCache = Object.values(snap.val()); }
+                if(snap.exists()) adsCache = Object.values(snap.val());
             });
 
             setInterval(() => {
@@ -483,19 +451,17 @@
                 if (adsCache.length > 0) {
                     adIndex = (adIndex + 1) % adsCache.length;
                     const url = adsCache[adIndex];
-                                               
                     displayArea.style.opacity = 0;
                     setTimeout(() => {
                         displayArea.innerHTML = url.match(/\.(mp4|webm|ogg)$/i) ? 
                             `<video class="midia-content" autoplay muted loop src="${url}"></video>` : 
                             `<img class="midia-content" src="${url}">`;
                         displayArea.style.opacity = 1;
-                    }, 800);
+                    }, 500);
                 }
             }, 10000);
         }
 
-        verificarSeguranca();
         motorPublicidade();
     </script>
 </body>

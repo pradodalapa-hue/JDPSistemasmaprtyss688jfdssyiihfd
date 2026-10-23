@@ -141,7 +141,6 @@
             background: var(--slate);
         }
 
-        /* INVERTE APENAS OS TILES DO MAPA PRESERVANDO OS MARCADORES EM CORES REAIS */
         .leaflet-tile {
             filter: invert(90%) hue-rotate(180deg) brightness(0.9) contrast(1.1);
         }
@@ -196,7 +195,6 @@
         .text-green-500 { color: #22c55e; text-shadow: 0 0 10px #22c55e; }
         .border-green-500 { border-color: #22c55e; }
 
-        /* Estilização da Placa de Endereço (Popup Leaflet) */
         .leaflet-popup-content-wrapper {
             background: #020617 !important;
             border: 2px solid var(--cyan) !important;
@@ -209,7 +207,6 @@
             background: var(--cyan) !important;
         }
 
-        /* REMOVE TOTALMENTE QUALQUER BORDA OU FUNDO PADRÃO DO LEAFLET */
         .leaflet-div-icon {
             background: transparent !important;
             border: none !important;
@@ -219,7 +216,6 @@
 </head>
 <body>
 
-    <!-- HUD DE ALERTA DE BUZINA -->
     <div id="alerta-buzina">
         <div style="font-size: 24px;">🔊</div>
         <div>
@@ -228,12 +224,10 @@
         </div>
     </div>
 
-    <!-- BOTÃO FÍSICO DE BUZINA NO MAPA (HUD SUPREME) -->
     <div id="btn-buzina-mapa" title="Disparar Buzina Manual" onclick="dispararBuzinaManual()">
         <i class="fa-solid fa-volume-high"></i>
     </div>
 
-    <!-- TELA DE BLOQUEIO INTEGRADA (INICIALIZADA COMO ATIVA) -->
     <div id="tela-seguranca">
         <div class="painel-bloqueio">
             <img id="status-img" src="https://raw.githubusercontent.com/pradodalapa-hue/fotos-industrial/main/img/jdp_1779707901946_1776103715509.png" class="img-bloqueio" alt="Bloqueado">
@@ -243,7 +237,6 @@
         </div>
     </div>
 
-    <!-- ÁREA DO MAPA -->
     <div id="map"></div>
           
     <div id="tv-midia">
@@ -255,7 +248,6 @@
     </a>
 
     <script>
-        // --- CONFIGURAÇÃO INDUSTRIAL ---
         firebase.initializeApp({ databaseURL: "https://dony-burguers-default-rtdb.firebaseio.com" });
         const db = firebase.database();
         const LOJA_ID = 'LEOVARDIOS_burguer_2026';
@@ -263,11 +255,8 @@
         const urlParams = new URLSearchParams(window.location.search);
         const pedidoID = urlParams.get('pedido');
 
-        // --- LINK DA BUZINA (DEFINIDO PELO CRIADOR SR. JOSÉ) ---
-        // Altere a URL abaixo para o link de áudio que desejar. Se o link falhar, o sintetizador assumirá o controle.
         const AUDIO_BUZINA_URL = "https://raw.githubusercontent.com/pradodalapa-hue/fotos-industrial/main/media/jdp_1781371308253_Buzina_marca_BZM_para_Motos_1_tom_MP3_160K_.mp3"; 
 
-        // Referências de UI
         const telaSeguranca = document.getElementById('tela-seguranca');
         const terminalLog = document.getElementById('terminal-log');
         const mensagemSeguranca = document.getElementById('mensagem-seguranca');
@@ -279,7 +268,6 @@
         let adIndex = 0;
         let mapaInicializado = false;
 
-        // --- ENGENHARIA DE ÁUDIO HELENA (BYPASS DE BLOQUEIO DE NAVEGADOR) ---
         let audioCtx = null;
         let audioBuzinaElement = new Audio(AUDIO_BUZINA_URL);
         audioBuzinaElement.preload = "auto";
@@ -293,11 +281,9 @@
             }
         }
 
-        // Desbloqueia o áudio imediatamente no primeiro toque do usuário na tela
         window.addEventListener('click', inicializarAudioContext, { once: false });
         window.addEventListener('touchstart', inicializarAudioContext, { once: false });
 
-        // Sintetizador Físico de Buzina de Alta Performance (Fallback caso o arquivo externo falhe)
         function emitirSomSintetizado() {
             try {
                 inicializarAudioContext();
@@ -327,44 +313,27 @@
                 osc1.stop(audioCtx.currentTime + 0.5);
                 osc2.stop(audioCtx.currentTime + 0.5);
             } catch (err) {
-                console.error("Erro no sintetizador de áudio:", err);
+                console.error("Erro no áudio:", err);
             }
         }
 
-        // Toca o arquivo de áudio fornecido pelo Sr. José, com fallback automático
         function tocarAudioBuzina() {
             inicializarAudioContext();
-            audioBuzinaElement.play()
-                .then(() => {
-                    console.log("Buzina reproduzida a partir do link externo.");
-                })
-                .catch(err => {
-                    console.warn("Falha ao reproduzir áudio externo. Ativando Sintetizador de Contingência HELENA...", err);
-                    emitirSomSintetizado();
-                });
+            audioBuzinaElement.play().catch(() => emitirSomSintetizado());
         }
 
-        // Executa o alerta visual HUD e aciona o som
         function dispararBuzina() {
             tocarAudioBuzina();
             alertaBuzina.classList.add('active');
-            
-            // Remove o alerta visual após 4 segundos
-            setTimeout(() => {
-                alertaBuzina.classList.remove('active');
-            }, 4000);
+            setTimeout(() => { alertaBuzina.classList.remove('active'); }, 4000);
         }
 
-        // Função para o Sr. José acionar manualmente e sincronizar no Firebase
         function dispararBuzinaManual() {
             dispararBuzina();
-            // Atualiza o Firebase para propagar a buzina para outros terminais do sistema
-            db.ref(`lojas/${LOJA_ID}/motoboy_status`).update({
-                buzina_trigger: Date.now()
-            });
+            db.ref(`lojas/${LOJA_ID}/motoboy_status`).update({ buzina_trigger: Date.now() });
         }
 
-        // --- SISTEMA DE VERIFICAÇÃO DE SEGURANÇA HELENA ---
+        // --- VERIFICAÇÃO CONTÍNUA E BLINDAGEM DE ROTA ---
         function verificarSeguranca() {
             if (!pedidoID || !pedidoID.startsWith('JDP-')) {
                 bloquearAcesso("ACESSO NEGADO", "ID DE PEDIDO INVÁLIDO OU AUSENTE");
@@ -373,19 +342,19 @@
 
             terminalLog.innerText = "CONECTANDO AO BANCO DE DADOS...";
                                           
-            // Escuta em tempo real o status de liberação do pedido
             db.ref(`lojas/${LOJA_ID}/rastreio_ativo/${pedidoID}`).on('value', snap => {
                 const data = snap.val();
                                           
                 if (!data) {
+                    // Si el ID ya no está en rastreio_ativo, verificamos si está concluído o lo bloqueamos de inmediato
                     db.ref(`lojas/${LOJA_ID}/pedidos_concluidos/${pedidoID}`).once('value', snapConcluido => {
                         if (snapConcluido.exists()) {
                             bloquearAcesso("ENTREGA CONCLUÍDA", "OBRIGADO PELA PREFERÊNCIA!");
                         } else {
-                            bloquearAcesso("ID NÃO ENCONTRADO", "ESTE PEDIDO NÃO EXISTE OU FOI CONCLUÍDO");
+                            bloquearAcesso("FORA DE ROTA", "ESTE PEDIDU NWA DE ROTA AGBA O ROKI O FENISH");
                         }
                     });
-                } else if (data.giro_autorizado === true || data.validado_pdv === true) {
+                } else if (data.na_pista === true || data.status === "em_rota" || data.giro_autorizado === true) {
                     liberarAcesso();
                 } else {
                     aguardarPagamento();
@@ -421,7 +390,6 @@
             }, 1000);
         }
 
-        // --- INICIALIZADOR DO MOTOR GRÁFICO DO MAPA ---
         function inicializarMapa() {
             if (mapaInicializado) return;
             mapaInicializado = true;
@@ -433,69 +401,48 @@
                 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-            // 1. ESCUTA DA TELEMETRIA REAL-TIME DO MOTOBOY COM VETOR DE DIRECIONAMENTO INTELIGENTE
             db.ref(`lojas/${LOJA_ID}/motoboy_status`).on('value', snap => {
                 const pos = snap.val();
                 document.body.classList.toggle('modo-tv', !(pos && pos.online));
                                           
                 if (pos && pos.online) {
                     const bearing = pos.bearing || 0;
-                    
                     const imgDireita = "https://raw.githubusercontent.com/pradodalapa-hue/fotos-industrial/main/img/jdp_1781366116603_1001229381.png";
                     const imgEsquerda = "https://raw.githubusercontent.com/pradodalapa-hue/fotos-industrial/main/img/jdp_1781368263004_Engenheiro_Transparente.png";
                     
                     let imgAtiva = imgDireita;
                     let inclinacaoReal = 0;
-
                     const angulo = (bearing % 360 + 360) % 360;
 
                     if (angulo > 180 && angulo <= 360) {
                         imgAtiva = imgEsquerda;
-                        if (angulo > 270) {
-                            inclinacaoReal = -15;
-                        } else if (angulo < 270) {
-                            inclinacaoReal = 15;
-                        }
+                        if (angulo > 270) inclinacaoReal = -15;
+                        else if (angulo < 270) inclinacaoReal = 15;
                     } else {
                         imgAtiva = imgDireita;
-                        if (angulo < 90) {
-                            inclinacaoReal = -15;
-                        } else if (angulo > 90) {
-                            inclinacaoReal = 15;
-                        }
+                        if (angulo < 90) inclinacaoReal = -15;
+                        else if (angulo > 90) inclinacaoReal = 15;
                     }
 
                     const iconHtml = `<img src="${imgAtiva}" style="width: 38px; height: 38px; transform: rotate(${inclinacaoReal}deg); filter: drop-shadow(0 0 5px rgba(6,182,212,0.95)); display: block; background: transparent;">`;
                     
                     if (!markerMotoboy) {
                         markerMotoboy = L.marker([pos.latitude, pos.longitude], {
-                            icon: L.divIcon({
-                                html: iconHtml,
-                                iconSize: [38, 38],
-                                iconAnchor: [19, 19]
-                            })
+                            icon: L.divIcon({ html: iconHtml, iconSize: [38, 38], iconAnchor: [19, 19] })
                         }).addTo(map);
                     } else {
                         markerMotoboy.setLatLng([pos.latitude, pos.longitude]);
-                        markerMotoboy.setIcon(L.divIcon({
-                            html: iconHtml,
-                            iconSize: [38, 38],
-                            iconAnchor: [19, 19]
-                        }));
+                        markerMotoboy.setIcon(L.divIcon({ html: iconHtml, iconSize: [38, 38], iconAnchor: [19, 19] }));
                     }
                     map.panTo([pos.latitude, pos.longitude]);
                 }
             });
 
-            // 1.2 ESCUTA DO ACIONAMENTO DA BUZINA EM TEMPO REAL
             let ultimoBuzinar = null;
             db.ref(`lojas/${LOJA_ID}/motoboy_status/buzina_trigger`).on('value', snap => {
                 const val = snap.val();
                 if (val) {
-                    if (ultimoBuzinar === null) {
-                        ultimoBuzinar = val;
-                        return;
-                    }
+                    if (ultimoBuzinar === null) { ultimoBuzinar = val; return; }
                     if (val !== ultimoBuzinar) {
                         ultimoBuzinar = val;
                         dispararBuzina();
@@ -503,7 +450,6 @@
                 }
             });
 
-            // 2. ESCUTA DO DESTINO EXATO DO CLIENTE
             db.ref(`lojas/${LOJA_ID}/rastreio_ativo/${pedidoID}`).on('value', snap => {
                 const data = snap.val();
                                          
@@ -529,11 +475,7 @@
 
                     if (!markerDestino) {
                         markerDestino = L.marker([lat, lng], {
-                            icon: L.divIcon({
-                                html: '<div style="font-size:32px; filter: drop-shadow(0 0 8px rgba(253,224,71,0.8));">📍</div>',
-                                iconSize: [32, 32],
-                                iconAnchor: [16, 32]
-                            })
+                            icon: L.divIcon({ html: '<div style="font-size:32px; filter: drop-shadow(0 0 8px rgba(253,224,71,0.8));">📍</div>', iconSize: [32, 32], iconAnchor: [16, 32] })
                         }).addTo(map).bindPopup(placaConteudo).openPopup();
                     } else {
                         markerDestino.setLatLng([lat, lng]);
@@ -543,7 +485,6 @@
             });
         }
 
-        // --- MOTOR DE PUBLICIDADE PRADO_67 ---
         function motorPublicidade() {
             db.ref(`publicidade/prado_67`).on('value', snap => {
                 if(snap.exists()){ adsCache = Object.values(snap.val()); }
@@ -566,7 +507,6 @@
             }, 10000);
         }
 
-        // EXECUÇÃO IMEDIATA
         verificarSeguranca();
         motorPublicidade();
     </script>

@@ -256,9 +256,11 @@
 
     <script>
         // --- CONFIGURAÇÃO INDUSTRIAL ---
-        firebase.initializeApp({ databaseURL: "https://[BANCO_REMOVIDO_POR_MEDIDA_DE_SEGURANÇA_HELENA].firebaseio.com" });
+        const LOJA_ID = "LEOVARDIOS_burguer_2026";
+        const TIGER_PATH = "lojas/LEOVARDIOS_burguer_2026/config_tiger";
+        const firebaseConfig = { databaseURL: "https://dony-burguers-default-rtdb.firebaseio.com" };
+        firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-        const LOJA_ID = 'LEOVARDIOS_burguer_2026';
                   
         const urlParams = new URLSearchParams(window.location.search);
         const pedidoID = urlParams.get('pedido');

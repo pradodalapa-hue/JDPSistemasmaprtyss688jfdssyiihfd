@@ -51,7 +51,13 @@
             justify-content: center;
             padding: 20px;
             overflow-y: auto;
-            transition: opacity 0.5s ease, visibility 0.5s ease;
+            transition: all 0.5s ease;
+        }
+
+        /* Esconde e desativa completamente o portal quando no mapa */
+        #portal-container.desativado {
+            display: none !important;
+            pointer-events: none !important;
         }
 
         .portal-box {
@@ -186,11 +192,12 @@
 
         /* --- ÁREA DO MAPA E HUD --- */
         #map { 
-            width: 100%; 
-            height: 100%; 
+            width: 100vw; 
+            height: 100vh; 
             position: absolute;
             inset: 0;
             background: #020617;
+            z-index: 1;
         }
 
         .leaflet-tile {
@@ -239,10 +246,9 @@
         }
         #tv-midia .midia-content { width: 100%; height: 100%; object-fit: cover; }
         
-        .modo-tv #map { height: 0%; opacity: 0; pointer-events: none; }
+        .modo-tv #map { display: none !important; }
         .modo-tv #tv-midia { display: flex; width: 100%; height: 100%; bottom: 0; right: 0; border: none; border-radius: 0; z-index: 5000; }
 
-        .hidden { opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; }
         .leaflet-popup-content-wrapper { background: #020617 !important; border: 2px solid var(--cyan) !important; color: #fff !important; border-radius: 8px !important; }
         .leaflet-div-icon { background: transparent !important; border: none !important; }
     </style>
@@ -317,8 +323,7 @@
         const AUDIO_BUZINA_URL = "https://raw.githubusercontent.com/pradodalapa-hue/fotos-industrial/main/media/jdp_1781371308253_Buzina_marca_BZM_para_Motos_1_tom_MP3_160K_.mp3"; 
         const audioBuzinaElement = new Audio(AUDIO_BUZINA_URL);
 
-        // Inicializa o mapa imediatamente em segundo plano para carregar o Leaflet sem travar
-        function preInicializarMapa() {
+        function inicializarMapaEngine() {
             if (mapaInicializado) return;
             mapaInicializado = true;
 
@@ -343,6 +348,7 @@
                         markerMotoboy.setLatLng([pos.latitude, pos.longitude]);
                         markerMotoboy.setIcon(L.divIcon({ html: iconHtml, iconSize: [38, 38], iconAnchor: [19, 19] }));
                     }
+                    map.panTo([pos.latitude, pos.longitude]);
                 }
             });
 
@@ -384,11 +390,9 @@
             }
         }
 
-        // Se já vier com pedido na URL, inicia a busca automática
         if (idPedidoBuscado) {
             document.getElementById('input-id').value = idPedidoBuscado;
             iniciarEscutaFirebase(idPedidoBuscado);
-            preInicializarMapa();
         }
 
         function rastrearPedidoManual() {
@@ -398,7 +402,6 @@
 
             idPedidoBuscado = id;
             window.history.replaceState({}, '', `?pedido=${id}`);
-            preInicializarMapa();
             iniciarEscutaFirebase(id);
         }
 
@@ -503,25 +506,23 @@
             document.getElementById('btnMapa').style.display = "none";
         }
 
-        // --- TRANSIÇÃO PARA O MAPA E BLOQUEIO DE PUBLICIDADE ---
+        // --- ENTRAR NO MAPA COM ATUALIZAÇÃO REATIVA ---
         function entrarNoMapa() {
-            preInicializarMapa();
-            
-            // Esconde a tela de status/portal com classe hidden
-            document.getElementById('portal-container').classList.add('hidden');
-            
-            // Remove o modo TV para garantir que a publicidade suma
+            // Remove a tela do portal de consulta
+            document.getElementById('portal-container').classList.add('desativado');
             document.body.classList.remove('modo-tv');
 
-            // Força o Leaflet a recalcular o tamanho e re-renderizar as tiles corretamente sem travar
+            // Inicializa a engine do mapa
+            inicializarMapaEngine();
+
+            // Atualiza tamanho do renderizador no próximo frame
             setTimeout(() => {
                 if (map) {
                     map.invalidateSize();
                 }
-            }, 300);
+            }, 100);
         }
 
-        // Publicidade (só roda se o sistema estiver ocioso / sem mapa ativo)
         function motorPublicidade() {
             db.ref(`publicidade/prado_67`).on('value', snap => {
                 if(snap.exists()) adsCache = Object.values(snap.val());
@@ -529,7 +530,7 @@
 
             setInterval(() => {
                 const displayArea = document.getElementById('display-area');
-                const ocioso = document.getElementById('portal-container').classList.contains('hidden') === false;
+                const ocioso = !document.getElementById('portal-container').classList.contains('desativado');
                 
                 document.body.classList.toggle('modo-tv', ocioso && adsCache.length > 0);
 

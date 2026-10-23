@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JDP | MONITORAMENTO SUPREME</title>
+    
+    <!-- Firebase e Leaflet -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Google Fonts & FontAwesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        :root {
+            --cyan: #06b6d4;
+            --gold: #fde047;
+            --slate: #020617;
+            --red: #ef4444;
+        }
+
+        body, html { 
+            margin: 0; 
+            padding: 0; 
+            height: 100%; 
+            background: var(--slate); 
+            overflow: hidden; 
+            font-family: 'Inter', sans-serif; 
+        }
+
+        /* --- TELA DE BLOQUEIO HELENA INDUSTRIAL --- */
+        #tela-seguranca {
+            position: fixed;
+            inset: 0;
+            background: var(--slate);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.8s cubic-bezier(0.1, 0, 0.1, 1);
+        }
+
+        .painel-bloqueio {
+            text-align: center;
+            max-width: 400px;
+            padding: 20px;
+        }
+
+        .img-bloqueio {
+            max-width: 280px;
+            border-radius: 15px;
+            border: 2px solid var(--cyan);
+            box-shadow: 0 0 30px rgba(6, 182, 212, 0.2);
+            margin: 0 auto 20px auto;
+        }
+
+        .terminal-status {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 11px;
+            letter-spacing: 2px;
+            padding: 10px;
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+
+        /* --- ALERTA VISUAL DE BUZINA (HUD) --- */
+        #alerta-buzina {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: rgba(2, 6, 23, 0.95);
+            border: 2px solid var(--cyan);
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.6);
+            padding: 15px 30px;
+            border-radius: 10px;
+            z-index: 3000;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none;
+            opacity: 0;
+        }
+
+        #alerta-buzina.active {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+            animation: flashBuzina 0.5s infinite alternate;
+        }
+
+        @keyframes flashBuzina {
+            from { border-color: var(--cyan); box-shadow: 0 0 15px rgba(6, 182, 212, 0.6); }
+            to { border-color: var(--gold); box-shadow: 0 0 25px rgba(253, 224, 71, 0.8); }
+        }
+
+        /* --- BOTÃO CONTROLE DE BUZINA NO MAPA --- */
+        #btn-buzina-mapa {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background: var(--slate);
+            border: 2px solid var(--cyan);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--cyan);
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 2000;
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        #btn-buzina-mapa:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(253, 224, 71, 0.6);
+        }
+
+        #btn-buzina-mapa:active {
+            transform: scale(0.9);
+        }
+
+        /* --- MAPA E COMPONENTES --- */
+        #map { 
+            width: 100%; 
+            height: 100%; 
+            transition: all 1s ease; 
+            background: var(--slate);
+        }
+
+        /* INVERTE APENAS OS TILES DO MAPA PRESERVANDO OS MARCADORES EM CORES REAIS */
+        .leaflet-tile {
+            filter: invert(90%) hue-rotate(180deg) brightness(0.9) contrast(1.1);
+        }
+                  
+        #tv-midia { 
+            position: absolute; 
+            bottom: 20px; 
+            right: 20px; 
+            width: 300px; 
+            height: 200px; 
+            background: #000; 
+            border: 3px solid var(--gold); 
+            border-radius: 10px; 
+            z-index: 1000;
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            overflow: hidden; 
+            transition: all 0.5s; 
+        }
+
+        #tv-midia .midia-content { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+        }
+                  
+        #btn-logo { 
+            position: absolute; 
+            bottom: 30px; 
+            left: 30px; 
+            width: 80px; 
+            height: 80px; 
+            z-index: 2000; 
+            cursor: pointer; 
+            border-radius: 50%; 
+            border: 3px solid var(--gold); 
+            box-shadow: 0 0 15px rgba(253, 224, 71, 0.5); 
+            transition: 0.3s; 
+        }
+
+        .modo-tv #map { height: 0%; opacity: 0; }
+        .modo-tv #tv-midia { width: 100%; height: 100%; bottom: 0; right: 0; border: none; border-radius: 0; }
+                  
+        .hidden { display: none !important; }
+        .text-cyan { color: var(--cyan); text-shadow: 0 0 10px var(--cyan); }
+        .text-gold { color: var(--gold); text-shadow: 0 0 10px var(--gold); }
+        .text-red-500 { color: var(--red); text-shadow: 0 0 10px var(--red); }
+        .border-red-500 { border-color: var(--red); }
+        .text-yellow-500 { color: var(--gold); text-shadow: 0 0 10px var(--gold); }
+        .border-yellow-500 { border-color: var(--gold); }
+        .text-green-500 { color: #22c55e; text-shadow: 0 0 10px #22c55e; }
+        .border-green-500 { border-color: #22c55e; }
+
+        /* Estilização da Placa de Endereço (Popup Leaflet) */
+        .leaflet-popup-content-wrapper {
+            background: #020617 !important;
+            border: 2px solid var(--cyan) !important;
+            color: #fff !important;
+            border-radius: 8px !important;
+            padding: 0px !important;
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.4) !important;
+        }
+        .leaflet-popup-tip {
+            background: var(--cyan) !important;
+        }
+
+        /* REMOVE TOTALMENTE QUALQUER BORDA OU FUNDO PADRÃO DO LEAFLET */
+        .leaflet-div-icon {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HUD DE ALERTA DE BUZINA -->
+    <div id="alerta-buzina">
+        <div style="font-size: 24px;">🔊</div>
+        <div>
+            <h4 class="text-gold" style="margin: 0; font-family: 'Orbitron'; font-size: 14px; letter-spacing: 1px;">MOTOBOY CHEGANDO!</h4>
+            <span class="text-cyan" style="font-size: 11px; font-weight: bold; letter-spacing: 1.5px;">ELE BUZINOU NO PORTÃO</span>
+        </div>
+    </div>
+
+    <!-- BOTÃO FÍSICO DE BUZINA NO MAPA (HUD SUPREME) -->
+    <div id="btn-buzina-mapa" title="Disparar Buzina Manual" onclick="dispararBuzinaManual()">
+        <i class="fa-solid fa-volume-high"></i>
+    </div>
+
+    <!-- TELA DE BLOQUEIO INTEGRADA (INICIALIZADA COMO ATIVA) -->
+    <div id="tela-seguranca">
+        <div class="painel-bloqueio">
+            <img id="status-img" src="https://raw.githubusercontent.com/pradodalapa-hue/fotos-industrial/main/img/jdp_1779707901946_1776103715509.png" class="img-bloqueio" alt="Bloqueado">
+            <h2 class="text-cyan font-bold text-lg tracking-wider uppercase mb-1" style="font-family: 'Orbitron';">SISTEMA JDP SECURE</h2>
+            <p id="mensagem-seguranca" class="text-xs text-slate-400 uppercase tracking-widest">Iniciando varredura de protocolo...</p>
+            <div id="terminal-log" class="terminal-status text-gold">VERIFICANDO CREDENCIAIS...</div>
+        </div>
+    </div>
+
+    <!-- ÁREA DO MAPA -->
+    <div id="map"></div>
+          
+    <div id="tv-midia">
+        <div id="display-area"></div>
+    </div>
+              
+    <a href="https://pradodalapa-hue.github.io/JDPSISISTEMAROLETEPRIVATEWTUWIWIIS/" target="_blank">
+        <img id="btn-logo" src="https://raw.githubusercontent.com/pradodalapa-hue/fotos-industrial/main/img/jdp_1779773266613_1776103725063.png" alt="Cardápio">
+    </a>
+
+    <script>
+        // --- CONFIGURAÇÃO INDUSTRIAL ---
+        firebase.initializeApp({ databaseURL: "https://[BANCO_REMOVIDO_POR_MEDIDA_DE_SEGURANÇA_HELENA].firebaseio.com" });
+        const db = firebase.database();
+        const LOJA_ID = 'LEOVARDIOS_burguer_2026';
+                  
+        const urlParams = new URLSearchParams(window.location.search);
+        const pedidoID = urlParams.get('pedido');
+
+        // --- LINK DA BUZINA (DEFINIDO PELO CRIADOR SR. JOSÉ) ---
+        // Altere a URL abaixo para o link de áudio que desejar. Se o link falhar, o sintetizador assumirá o controle.
+        const AUDIO_BUZINA_URL = "https://raw.githubusercontent.com/pradodalapa-hue/fotos-industrial/main/media/jdp_1781371308253_Buzina_marca_BZM_para_Motos_1_tom_MP3_160K_.mp3"; 
+
+        // Referências de UI
+        const telaSeguranca = document.getElementById('tela-seguranca');
+        const terminalLog = document.getElementById('terminal-log');
+        const mensagemSeguranca = document.getElementById('mensagem-seguranca');
+        const statusImg = document.getElementById('status-img');
+        const alertaBuzina = document.getElementById('alerta-buzina');
+
+        let map, markerMotoboy, markerDestino;
+        let adsCache = ["https://raw.githubusercontent.com/pradodalapa-hue/fotos-industrial/main/img/jdp_1776919033775_Engenheiro_Transparente__1_.png"];
+        let adIndex = 0;
+        let mapaInicializado = false;
+
+        // --- ENGENHARIA DE ÁUDIO HELENA (BYPASS DE BLOQUEIO DE NAVEGADOR) ---
+        let audioCtx = null;
+        let audioBuzinaElement = new Audio(AUDIO_BUZINA_URL);
+        audioBuzinaElement.preload = "auto";
+
+        function inicializarAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // Desbloqueia o áudio imediatamente no primeiro toque do usuário na tela
+        window.addEventListener('click', inicializarAudioContext, { once: false });
+        window.addEventListener('touchstart', inicializarAudioContext, { once: false });
+
+        // Sintetizador Físico de Buzina de Alta Performance (Fallback caso o arquivo externo falhe)
+        function emitirSomSintetizado() {
+            try {
+                inicializarAudioContext();
+                if (!audioCtx) return;
+
+                const osc1 = audioCtx.createOscillator();
+                const osc2 = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+
+                osc1.type = 'sawtooth'; 
+                osc1.frequency.setValueAtTime(440, audioCtx.currentTime); 
+
+                osc2.type = 'sine'; 
+                osc2.frequency.setValueAtTime(880, audioCtx.currentTime); 
+
+                gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.15, audioCtx.currentTime + 0.05);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+
+                osc1.connect(gainNode);
+                osc2.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                osc1.start();
+                osc2.start();
+
+                osc1.stop(audioCtx.currentTime + 0.5);
+                osc2.stop(audioCtx.currentTime + 0.5);
+            } catch (err) {
+                console.error("Erro no sintetizador de áudio:", err);
+            }
+        }
+
+        // Toca o arquivo de áudio fornecido pelo Sr. José, com fallback automático
+        function tocarAudioBuzina() {
+            inicializarAudioContext();
+            audioBuzinaElement.play()
+                .then(() => {
+                    console.log("Buzina reproduzida a partir do link externo.");
+                })
+                .catch(err => {
+                    console.warn("Falha ao reproduzir áudio externo. Ativando Sintetizador de Contingência HELENA...", err);
+                    emitirSomSintetizado();
+                });
+        }
+
+        // Executa o alerta visual HUD e aciona o som
+        function dispararBuzina() {
+            tocarAudioBuzina();
+            alertaBuzina.classList.add('active');
+            
+            // Remove o alerta visual após 4 segundos
+            setTimeout(() => {
+                alertaBuzina.classList.remove('active');
+            }, 4000);
+        }
+
+        // Função para o Sr. José acionar manualmente e sincronizar no Firebase
+        function dispararBuzinaManual() {
+            dispararBuzina();
+            // Atualiza o Firebase para propagar a buzina para outros terminais do sistema
+            db.ref(`lojas/${LOJA_ID}/motoboy_status`).update({
+                buzina_trigger: Date.now()
+            });
+        }
+
+        // --- SISTEMA DE VERIFICAÇÃO DE SEGURANÇA HELENA ---
+        function verificarSeguranca() {
+            if (!pedidoID || !pedidoID.startsWith('JDP-')) {
+                bloquearAcesso("ACESSO NEGADO", "ID DE PEDIDO INVÁLIDO OU AUSENTE");
+                return;
+            }
+
+            terminalLog.innerText = "CONECTANDO AO BANCO DE DADOS...";
+                                          
+            // Escuta em tempo real o status de liberação do pedido
+            db.ref(`lojas/${LOJA_ID}/rastreio_ativo/${pedidoID}`).on('value', snap => {
+                const data = snap.val();
+                                          
+                if (!data) {
+                    db.ref(`lojas/${LOJA_ID}/pedidos_concluidos/${pedidoID}`).once('value', snapConcluido => {
+                        if (snapConcluido.exists()) {
+                            bloquearAcesso("ENTREGA CONCLUÍDA", "OBRIGADO PELA PREFERÊNCIA!");
+                        } else {
+                            bloquearAcesso("ID NÃO ENCONTRADO", "ESTE PEDIDO NÃO EXISTE OU FOI CONCLUÍDO");
+                        }
+                    });
+                } else if (data.giro_autorizado === true || data.validado_pdv === true) {
+                    liberarAcesso();
+                } else {
+                    aguardarPagamento();
+                }
+            });
+        }
+
+        function bloquearAcesso(titulo, sub) {
+            statusImg.src = "https://raw.githubusercontent.com/pradodalapa-hue/fotos-industrial/main/img/jdp_1779707901946_1776103715509.png";
+            mensagemSeguranca.innerText = sub;
+            terminalLog.innerText = titulo;
+            terminalLog.className = "terminal-status text-red-500 border-red-500";
+            telaSeguranca.classList.remove('hidden');
+        }
+
+        function aguardarPagamento() {
+            mensagemSeguranca.innerText = "AGUARDANDO CONFIRMAÇÃO DE PAGAMENTO";
+            terminalLog.innerText = "STATUS: PENDENTE";
+            terminalLog.className = "terminal-status text-yellow-500 border-yellow-500";
+            telaSeguranca.classList.remove('hidden');
+        }
+
+        function liberarAcesso() {
+            terminalLog.innerText = "ACESSO AUTORIZADO! INICIANDO RASTREIO...";
+            terminalLog.className = "terminal-status text-green-500 border-green-500";
+                                          
+            setTimeout(() => {
+                telaSeguranca.style.opacity = "0";
+                setTimeout(() => {
+                    telaSeguranca.classList.add('hidden');
+                    inicializarMapa();
+                }, 800);
+            }, 1000);
+        }
+
+        // --- INICIALIZADOR DO MOTOR GRÁFICO DO MAPA ---
+        function inicializarMapa() {
+            if (mapaInicializado) return;
+            mapaInicializado = true;
+
+            map = L.map('map', {
+                zoomControl: true,
+                attributionControl: false
+            }).setView([-2.9903, -60.0673], 15);
+                
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+            // 1. ESCUTA DA TELEMETRIA REAL-TIME DO MOTOBOY COM VETOR DE DIRECIONAMENTO INTELIGENTE
+            db.ref(`lojas/${LOJA_ID}/motoboy_status`).on('value', snap => {
+                const pos = snap.val();
+                document.body.classList.toggle('modo-tv', !(pos && pos.online));
+                                          
+                if (pos && pos.online) {
+                    const bearing = pos.bearing || 0;
+                    
+                    const imgDireita = "https://raw.githubusercontent.com/pradodalapa-hue/fotos-industrial/main/img/jdp_1781366116603_1001229381.png";
+                    const imgEsquerda = "https://raw.githubusercontent.com/pradodalapa-hue/fotos-industrial/main/img/jdp_1781368263004_Engenheiro_Transparente.png";
+                    
+                    let imgAtiva = imgDireita;
+                    let inclinacaoReal = 0;
+
+                    const angulo = (bearing % 360 + 360) % 360;
+
+                    if (angulo > 180 && angulo <= 360) {
+                        imgAtiva = imgEsquerda;
+                        if (angulo > 270) {
+                            inclinacaoReal = -15;
+                        } else if (angulo < 270) {
+                            inclinacaoReal = 15;
+                        }
+                    } else {
+                        imgAtiva = imgDireita;
+                        if (angulo < 90) {
+                            inclinacaoReal = -15;
+                        } else if (angulo > 90) {
+                            inclinacaoReal = 15;
+                        }
+                    }
+
+                    const iconHtml = `<img src="${imgAtiva}" style="width: 38px; height: 38px; transform: rotate(${inclinacaoReal}deg); filter: drop-shadow(0 0 5px rgba(6,182,212,0.95)); display: block; background: transparent;">`;
+                    
+                    if (!markerMotoboy) {
+                        markerMotoboy = L.marker([pos.latitude, pos.longitude], {
+                            icon: L.divIcon({
+                                html: iconHtml,
+                                iconSize: [38, 38],
+                                iconAnchor: [19, 19]
+                            })
+                        }).addTo(map);
+                    } else {
+                        markerMotoboy.setLatLng([pos.latitude, pos.longitude]);
+                        markerMotoboy.setIcon(L.divIcon({
+                            html: iconHtml,
+                            iconSize: [38, 38],
+                            iconAnchor: [19, 19]
+                        }));
+                    }
+                    map.panTo([pos.latitude, pos.longitude]);
+                }
+            });
+
+            // 1.2 ESCUTA DO ACIONAMENTO DA BUZINA EM TEMPO REAL
+            let ultimoBuzinar = null;
+            db.ref(`lojas/${LOJA_ID}/motoboy_status/buzina_trigger`).on('value', snap => {
+                const val = snap.val();
+                if (val) {
+                    if (ultimoBuzinar === null) {
+                        ultimoBuzinar = val;
+                        return;
+                    }
+                    if (val !== ultimoBuzinar) {
+                        ultimoBuzinar = val;
+                        dispararBuzina();
+                    }
+                }
+            });
+
+            // 2. ESCUTA DO DESTINO EXATO DO CLIENTE
+            db.ref(`lojas/${LOJA_ID}/rastreio_ativo/${pedidoID}`).on('value', snap => {
+                const data = snap.val();
+                                         
+                if (data && data.latDestino && data.lngDestino) {
+                    const lat = parseFloat(data.latDestino);
+                    const lng = parseFloat(data.lngDestino);
+                    const nomeCliente = data.cliente_nome || data.mesa || "CLIENTE";
+                    const enderecoCliente = data.endereco || "RUA NOVA ERA";
+
+                    const placaConteudo = `
+                        <div style="background:#020617; padding:12px; border-radius:6px; min-width:180px; font-family:'Inter', sans-serif;">
+                            <div style="font-family:'Orbitron'; font-weight:900; color:var(--gold); font-size:11px; border-bottom:1px dashed var(--cyan); padding-bottom:4px; margin-bottom:6px;">
+                                <i class="fas fa-box"></i> ID: ${pedidoID}
+                            </div>
+                            <div style="font-weight:800; font-size:12px; color:#fff; text-transform:uppercase; margin-bottom:4px;">
+                                <i class="fas fa-user" style="color:var(--cyan)"></i> ${nomeCliente.toUpperCase()}
+                            </div>
+                            <div style="font-size:10px; color:#cbd5e1; text-transform:uppercase; line-height:1.3;">
+                                <i class="fas fa-map-marker-alt" style="color:var(--gold)"></i> ${enderecoCliente.toUpperCase()}
+                            </div>
+                        </div>
+                    `;
+
+                    if (!markerDestino) {
+                        markerDestino = L.marker([lat, lng], {
+                            icon: L.divIcon({
+                                html: '<div style="font-size:32px; filter: drop-shadow(0 0 8px rgba(253,224,71,0.8));">📍</div>',
+                                iconSize: [32, 32],
+                                iconAnchor: [16, 32]
+                            })
+                        }).addTo(map).bindPopup(placaConteudo).openPopup();
+                    } else {
+                        markerDestino.setLatLng([lat, lng]);
+                        markerDestino.setPopupContent(placaConteudo);
+                    }
+                }
+            });
+        }
+
+        // --- MOTOR DE PUBLICIDADE PRADO_67 ---
+        function motorPublicidade() {
+            db.ref(`publicidade/prado_67`).on('value', snap => {
+                if(snap.exists()){ adsCache = Object.values(snap.val()); }
+            });
+
+            setInterval(() => {
+                const displayArea = document.getElementById('display-area');
+                if (adsCache.length > 0) {
+                    adIndex = (adIndex + 1) % adsCache.length;
+                    const url = adsCache[adIndex];
+                                               
+                    displayArea.style.opacity = 0;
+                    setTimeout(() => {
+                        displayArea.innerHTML = url.match(/\.(mp4|webm|ogg)$/i) ? 
+                            `<video class="midia-content" autoplay muted loop src="${url}"></video>` : 
+                            `<img class="midia-content" src="${url}">`;
+                        displayArea.style.opacity = 1;
+                    }, 800);
+                }
+            }, 10000);
+        }
+
+        // EXECUÇÃO IMEDIATA
+        verificarSeguranca();
+        motorPublicidade();
+    </script>
+</body>
+            </html>

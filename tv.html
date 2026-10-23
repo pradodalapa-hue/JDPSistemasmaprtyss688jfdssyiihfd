@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JDP SUPREME KERNEL v13.5 - INDUSTRIAL CONTROL</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --gold: #d4af37;
+            --black: #000000;
+            --font-hud: 'Orbitron', sans-serif;
+        }
+
+        body, html {
+            margin: 0; padding: 0; background: var(--black);
+            color: white; font-family: 'Segoe UI', sans-serif;
+            height: 100vh; overflow: hidden;
+        }
+
+        /* VIEWPORT DE MÍDIA */
+        #tv-master-viewport { position: fixed; inset: 0; z-index: 1; background: #000; }
+        .tv-content-full { width: 100%; height: 100%; border: none; position: absolute; }
+
+        /* BARRA DE PESQUISA INDUSTRIAL */
+        .top-command-bar {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100px;
+            z-index: 5000; display: flex; align-items: center; justify-content: center;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.95), transparent);
+            backdrop-filter: blur(10px); border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+        }
+
+        .search-zone { width: 100%; max-width: 600px; padding: 0 20px; }
+        
+        .search-input-wrapper {
+            width: 100%; background: rgba(255,255,255,0.05); border: 2px solid var(--gold);
+            border-radius: 50px; padding: 10px 25px; display: flex; align-items: center;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
+        }
+
+        .search-input-wrapper input {
+            background: transparent; border: none; color: white; font-size: 18px; 
+            width: 100%; outline: none; font-family: var(--font-hud);
+        }
+
+        /* A BOLINHA DE PESQUISA (LUPA) */
+        .btn-search-trigger {
+            background: var(--gold); border: none; color: black;
+            width: 45px; height: 45px; border-radius: 50%;
+            cursor: pointer; font-size: 20px; margin-left: 10px;
+            display: flex; align-items: center; justify-content: center;
+            transition: 0.3s ease;
+            box-shadow: 0 0 10px var(--gold);
+        }
+        
+        .btn-search-trigger:hover { transform: scale(1.1); box-shadow: 0 0 20px var(--gold); }
+        .btn-search-trigger:active { transform: scale(0.9); }
+
+        /* INTERFACE BINGO */
+        .bingo-container {
+            width: 100%; height: 100%; background: #050505; 
+            display: flex; flex-direction: column; align-items: center; 
+            justify-content: center; border: 10px double var(--gold);
+        }
+        #bola-bingo {
+            width: 250px; height: 250px; border-radius: 50%; 
+            background: var(--gold); color: black; display: flex; 
+            align-items: center; justify-content: center; 
+            font-size: 120px; font-weight: bold; box-shadow: 0 0 50px var(--gold);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-command-bar">
+        <div class="search-zone">
+            <div class="search-input-wrapper">
+                <input type="text" id="tv-input" placeholder="PESQUISAR OU BINGO...">
+                <button class="btn-search-trigger" onclick="ativarBusca()" title="Confirmar Pesquisa">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="tv-master-viewport">
+        <div id="tv-engine" style="width:100%; height:100%;">
+            <div style="width:100%; height:100%; background: radial-gradient(circle, #111, #000);"></div>
+        </div>
+    </div>
+
+    <script>
+        function ativarBusca() {
+            const input = document.getElementById('tv-input');
+            const cmd = input.value.toUpperCase().trim();
+            const engine = document.getElementById('tv-engine');
+            
+            if(!cmd) return;
+
+            // LÓGICA DO MOTOR BINGO
+            if (cmd === "BINGO") {
+                engine.innerHTML = `
+                    <div class="bingo-container">
+                        <h1 style="color:var(--gold); font-family:var(--font-hud); font-size:50px;">BINGO JDP</h1>
+                        <div id="bola-bingo">--</div>
+                        <button onclick="sortear()" style="margin-top:30px; padding:15px 40px; background:var(--gold); color:black; font-weight:bold; cursor:pointer; border:none; border-radius:5px;">SORTEAR BOLA</button>
+                    </div>`;
+            } else {
+                // PESQUISA DE MÍDIA
+                engine.innerHTML = `<iframe class="tv-content-full" src="https://www.bing.com/videos/search?q=${encodeURIComponent(cmd)}&FORM=VRFLTR" allow="autoplay"></iframe>`;
+            }
+            
+            input.blur(); // Fecha o teclado mobile
+        }
+
+        function sortear() {
+            const num = Math.floor(Math.random() * 75) + 1;
+            document.getElementById('bola-bingo').innerText = num;
+        }
+
+        // SUPORTE AO TECLADO ENTER
+        document.getElementById('tv-input').addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') ativarBusca();
+        });
+    </script>
+</body>
+</html>

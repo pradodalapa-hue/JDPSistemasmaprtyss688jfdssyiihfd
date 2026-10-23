@@ -341,7 +341,7 @@
         let refPendente = null, refRastreio = null, refConcluido = null;
         let dadosPendente = null, dadosRastreio = null, dadosConcluido = null;
 
-        let map = null, markerMotoboy = null, markerDestino = null;
+        let map = null, markerMotoboy = null;
         let mapaInicializado = false;
         let adsCache = [];
         let adIndex = 0;
@@ -356,34 +356,7 @@
             map = L.map('map', { zoomControl: true, attributionControl: false }).setView([-2.9903, -60.0673], 15);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-            // Ouvinte de Rastreio Ativo do Destino do Cliente (Foca e posiciona o pino na rua do cliente)
-            if (idPedidoBuscado) {
-                db.ref(`lojas/${LOJA_ID}/rastreio_ativo/${idPedidoBuscado}`).on('value', snap => {
-                    const data = snap.val();
-                    if (data && data.latDestino && data.lngDestino) {
-                        const lat = parseFloat(data.latDestino);
-                        const lng = parseFloat(data.lngDestino);
-                        const nomeCliente = data.cliente_nome || "CLIENTE";
-                        const enderecoCliente = data.endereco || "MANAUS";
-
-                        const placaConteudo = `<div style="background:#020617; padding:10px; border-radius:6px; color:#fff;"><b style="color:var(--gold);">ID: ${idPedidoBuscado}</b><br><span style="color:var(--cyan);">${nomeCliente.toUpperCase()}</span><br><small>${enderecoCliente.toUpperCase()}</small></div>`;
-
-                        if (!markerDestino) {
-                            markerDestino = L.marker([lat, lng], {
-                                icon: L.divIcon({ html: '<div style="font-size:28px;">📍</div>', iconSize: [28, 28], iconAnchor: [14, 28] })
-                            }).addTo(map).bindPopup(placaConteudo).openPopup();
-                        } else {
-                            markerDestino.setLatLng([lat, lng]);
-                            markerDestino.setPopupContent(placaConteudo);
-                        }
-
-                        // Centraliza a câmera estritamente no destino cadastrado pelo cliente (Endereço Escrito)
-                        map.setView([lat, lng], 17);
-                    }
-                });
-            }
-
-            // Ouvinte da Telemetria Reativa do Motoboy (Apenas atualiza o pino do motoboy sem roubar o foco da câmera do cliente)
+            // Ouvinte da Telemetria Reativa do Motoboy (Atualiza o pino do motoboy e foca nele em tempo real)
             db.ref(`lojas/${LOJA_ID}/motoboy_status`).on('value', snap => {
                 const pos = snap.val();
                 if (pos && pos.online) {
@@ -401,7 +374,8 @@
                         markerMotoboy.setLatLng([pos.latitude, pos.longitude]);
                         markerMotoboy.setIcon(L.divIcon({ html: iconHtml, iconSize: [38, 38], iconAnchor: [19, 19] }));
                     }
-                    // NOTA: Removido o panTo automático no motoboy para que o mapa permaneça centrado na rua/destino do cliente.
+                    // Centraliza a câmera perfeitamente na posição dinâmica do motoboy
+                    map.panTo([pos.latitude, pos.longitude]);
                 }
             });
 

@@ -256,11 +256,9 @@
 
     <script>
         // --- CONFIGURAÇÃO INDUSTRIAL ---
-        const LOJA_ID = "LEOVARDIOS_burguer_2026";
-        const TIGER_PATH = "lojas/LEOVARDIOS_burguer_2026/config_tiger";
-        const firebaseConfig = { databaseURL: "https://dony-burguers-default-rtdb.firebaseio.com" };
-        firebase.initializeApp(firebaseConfig);
+        firebase.initializeApp({ databaseURL: "https://dony-burguers-default-rtdb.firebaseio.com" });
         const db = firebase.database();
+        const LOJA_ID = 'LEOVARDIOS_burguer_2026';
                   
         const urlParams = new URLSearchParams(window.location.search);
         const pedidoID = urlParams.get('pedido');
@@ -573,4 +571,4 @@
         motorPublicidade();
     </script>
 </body>
-            </html>
+</html>

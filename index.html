@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>JDP | Rastreio e Monitoramento Supremo</title>
-                         
+    <title>DONY BURGUER'S - RASTREIO SUPREMO DO CLIENTE</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
     <!-- Firebase SDK Compat -->
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
@@ -54,7 +55,6 @@
             transition: all 0.5s ease;
         }
 
-        /* Esconde e desativa completamente o portal quando no mapa */
         #portal-container.desativado {
             display: none !important;
             pointer-events: none !important;
@@ -204,6 +204,27 @@
             filter: invert(90%) hue-rotate(180deg) brightness(0.9) contrast(1.1);
         }
 
+        /* BOTÃO VOLTAR AO PAINEL NO MAPA */
+        #btn-voltar-painel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 3000;
+            background: rgba(2, 6, 23, 0.9);
+            border: 2px solid var(--cyan);
+            color: var(--cyan);
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
+        }
+
         /* ALERTA DE BUZINA */
         #alerta-buzina {
             position: absolute;
@@ -254,6 +275,11 @@
     </style>
 </head>
 <body>
+
+    <!-- BOTÃO DE RETORNO AO MENU QUANDO NO MAPA -->
+    <button id="btn-voltar-painel" onclick="voltarAoPortal()" style="display:none;">
+        <i class="fas fa-arrow-left"></i> STATUS DO PEDIDO
+    </button>
 
     <!-- HUD DE BUZINA -->
     <div id="alerta-buzina">
@@ -330,7 +356,31 @@
             map = L.map('map', { zoomControl: true, attributionControl: false }).setView([-2.9903, -60.0673], 15);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-            // Telemetria do Motoboy
+            // Ouvinte de Rastreio Ativo do Destino do Cliente
+            if (idPedidoBuscado) {
+                db.ref(`lojas/${LOJA_ID}/rastreio_ativo/${idPedidoBuscado}`).on('value', snap => {
+                    const data = snap.val();
+                    if (data && data.latDestino && data.lngDestino) {
+                        const lat = parseFloat(data.latDestino);
+                        const lng = parseFloat(data.lngDestino);
+                        const nomeCliente = data.cliente_nome || "CLIENTE";
+                        const enderecoCliente = data.endereco || "MANAUS";
+
+                        const placaConteudo = `<div style="background:#020617; padding:10px; border-radius:6px; color:#fff;"><b style="color:var(--gold);">ID: ${idPedidoBuscado}</b><br><span style="color:var(--cyan);">${nomeCliente.toUpperCase()}</span><br><small>${enderecoCliente.toUpperCase()}</small></div>`;
+
+                        if (!markerDestino) {
+                            markerDestino = L.marker([lat, lng], {
+                                icon: L.divIcon({ html: '<div style="font-size:28px;">📍</div>', iconSize: [28, 28], iconAnchor: [14, 28] })
+                            }).addTo(map).bindPopup(placaConteudo);
+                        } else {
+                            markerDestino.setLatLng([lat, lng]);
+                            markerDestino.setPopupContent(placaConteudo);
+                        }
+                    }
+                });
+            }
+
+            // Ouvinte da Telemetria Reativa do Motoboy (Idêntico ao app do motoboy)
             db.ref(`lojas/${LOJA_ID}/motoboy_status`).on('value', snap => {
                 const pos = snap.val();
                 if (pos && pos.online) {
@@ -348,11 +398,12 @@
                         markerMotoboy.setLatLng([pos.latitude, pos.longitude]);
                         markerMotoboy.setIcon(L.divIcon({ html: iconHtml, iconSize: [38, 38], iconAnchor: [19, 19] }));
                     }
+                    // Centraliza o mapa suavemente na posição em tempo real do motoboy
                     map.panTo([pos.latitude, pos.longitude]);
                 }
             });
 
-            // Buzina
+            // Ouvinte de Buzina
             let ultimoBuzinar = null;
             db.ref(`lojas/${LOJA_ID}/motoboy_status/buzina_trigger`).on('value', snap => {
                 const val = snap.val();
@@ -364,30 +415,6 @@
                     setTimeout(() => alerta.classList.remove('active'), 4000);
                 }
             });
-
-            // Destino
-            if (idPedidoBuscado) {
-                db.ref(`lojas/${LOJA_ID}/rastreio_ativo/${idPedidoBuscado}`).on('value', snap => {
-                    const data = snap.val();
-                    if (data && data.latDestino && data.lngDestino) {
-                        const lat = parseFloat(data.latDestino);
-                        const lng = parseFloat(data.lngDestino);
-                        const nomeCliente = data.cliente_nome || "CLIENTE";
-                        const enderecoCliente = data.endereco || "MANAUS";
-
-                        const placaConteudo = `<div style="background:#020617; padding:10px; border-radius:6px; color:#fff;"><b style="color:var(--gold);">ID: ${idPedidoBuscado}</b><br><span style="color:var(--cyan);">${nomeCliente.toUpperCase()}</span><br><small>${enderecoCliente.toUpperCase()}</small></div>`;
-
-                        if (!markerDestino) {
-                            markerDestino = L.marker([lat, lng], {
-                                icon: L.divIcon({ html: '<div style="font-size:28px;">📍</div>', iconSize: [28, 28], iconAnchor: [14, 28] })
-                            }).addTo(map).bindPopup(placaConteudo).openPopup();
-                        } else {
-                            markerDestino.setLatLng([lat, lng]);
-                            markerDestino.setPopupContent(placaConteudo);
-                        }
-                    }
-                });
-            }
         }
 
         if (idPedidoBuscado) {
@@ -479,6 +506,7 @@
             const btnMapa = document.getElementById('btnMapa');
             btnMapa.style.display = "flex";
             
+            // Auto-entra no mapa se o pedido estiver em rota
             entrarNoMapa();
         }
 
@@ -508,19 +536,22 @@
 
         // --- ENTRAR NO MAPA COM ATUALIZAÇÃO REATIVA ---
         function entrarNoMapa() {
-            // Remove a tela do portal de consulta
             document.getElementById('portal-container').classList.add('desativado');
+            document.getElementById('btn-voltar-painel').style.display = "flex";
             document.body.classList.remove('modo-tv');
 
-            // Inicializa a engine do mapa
             inicializarMapaEngine();
 
-            // Atualiza tamanho do renderizador no próximo frame
             setTimeout(() => {
                 if (map) {
                     map.invalidateSize();
                 }
             }, 100);
+        }
+
+        function voltarAoPortal() {
+            document.getElementById('portal-container').classList.remove('desativado');
+            document.getElementById('btn-voltar-painel').style.display = "none";
         }
 
         function motorPublicidade() {

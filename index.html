@@ -42,7 +42,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            transition: all 0.8s cubic-bezier(0.1, 0, 0.1, 1);
+            transition: opacity 0.5s ease, visibility 0.5s ease;
         }
 
         .painel-bloqueio {
@@ -185,7 +185,7 @@
         .modo-tv #map { height: 0%; opacity: 0; }
         .modo-tv #tv-midia { width: 100%; height: 100%; bottom: 0; right: 0; border: none; border-radius: 0; }
                   
-        .hidden { display: none !important; }
+        .hidden { opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; }
         .text-cyan { color: var(--cyan); text-shadow: 0 0 10px var(--cyan); }
         .text-gold { color: var(--gold); text-shadow: 0 0 10px var(--gold); }
         .text-red-500 { color: var(--red); text-shadow: 0 0 10px var(--red); }
@@ -333,31 +333,31 @@
             db.ref(`lojas/${LOJA_ID}/motoboy_status`).update({ buzina_trigger: Date.now() });
         }
 
-        // --- VERIFICAÇÃO CONTÍNUA E BLINDAGEM DE ROTA ---
+        // --- VERIFICAÇÃO DE SINCRONIZAÇÃO EM TEMPO REAL ---
         function verificarSeguranca() {
             if (!pedidoID || !pedidoID.startsWith('JDP-')) {
                 bloquearAcesso("ACESSO NEGADO", "ID DE PEDIDO INVÁLIDO OU AUSENTE");
                 return;
             }
 
-            terminalLog.innerText = "CONECTANDO AO BANCO DE DADOS...";
+            terminalLog.innerText = "SINCRO DE ROTA ATIVA...";
                                           
-            db.ref(`lojas/${LOJA_ID}/rastreio_ativo/${pedidoID}`).on('value', snap => {
-                const data = snap.val();
-                                          
-                if (!data) {
-                    // Si el ID ya no está en rastreio_ativo, verificamos si está concluído o lo bloqueamos de inmediato
-                    db.ref(`lojas/${LOJA_ID}/pedidos_concluidos/${pedidoID}`).once('value', snapConcluido => {
-                        if (snapConcluido.exists()) {
-                            bloquearAcesso("ENTREGA CONCLUÍDA", "OBRIGADO PELA PREFERÊNCIA!");
-                        } else {
-                            bloquearAcesso("FORA DE ROTA", "ESTE PEDIDU NWA DE ROTA AGBA O ROKI O FENISH");
-                        }
-                    });
-                } else if (data.na_pista === true || data.status === "em_rota" || data.giro_autorizado === true) {
+            // Monitora a tabela completa de rastreio e a entrega ativa do motoboy
+            db.ref(`lojas/${LOJA_ID}`).on('value', snap => {
+                const loja = snap.val() || {};
+                const rAtivo = loja.rastreio_ativo ? loja.rastreio_ativo[pedidoID] : null;
+                const pConcluido = loja.pedidos_concluidos ? loja.pedidos_concluidos[pedidoID] : null;
+                const pEmEntrega = loja.pedido_em_entrega || {};
+
+                // Se o pedido está explicitamente em rota ativa (no motoboy ou na pista)
+                const estaEmRota = (rAtivo && (rAtivo.na_pista === true || rAtivo.status === "em_rota" || rAtivo.status === "PRONTO_PARA_ENTREGA")) || (pEmEntrega.id === pedidoID);
+
+                if (estaEmRota) {
                     liberarAcesso();
+                } else if (pConcluido) {
+                    bloquearAcesso("ENTREGA CONCLUÍDA", "OBRIGADO PELA PREFERÊNCIA!");
                 } else {
-                    aguardarPagamento();
+                    bloquearAcesso("FORA DE ROTA", "AGUARDANDO O MOTOBOY INICIAR A ROTA");
                 }
             });
         }
@@ -370,24 +370,12 @@
             telaSeguranca.classList.remove('hidden');
         }
 
-        function aguardarPagamento() {
-            mensagemSeguranca.innerText = "AGUARDANDO CONFIRMAÇÃO DE PAGAMENTO";
-            terminalLog.innerText = "STATUS: PENDENTE";
-            terminalLog.className = "terminal-status text-yellow-500 border-yellow-500";
-            telaSeguranca.classList.remove('hidden');
-        }
-
         function liberarAcesso() {
             terminalLog.innerText = "ACESSO AUTORIZADO! INICIANDO RASTREIO...";
             terminalLog.className = "terminal-status text-green-500 border-green-500";
                                           
-            setTimeout(() => {
-                telaSeguranca.style.opacity = "0";
-                setTimeout(() => {
-                    telaSeguranca.classList.add('hidden');
-                    inicializarMapa();
-                }, 800);
-            }, 1000);
+            telaSeguranca.classList.add('hidden');
+            inicializarMapa();
         }
 
         function inicializarMapa() {

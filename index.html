@@ -247,26 +247,6 @@
             transition: 0.3s;
         }
         .btn-voltar-painel-k:hover { transform: scale(1.05); }
-        
-        /* CONTENEDOR DO IFRAME COM TRUQUE DE CORTE PARA OCULTAR O TOPO DO SITE EXTERNO */
-        .iframe-container-masked {
-            position: absolute;
-            top: 70px; /* Esconde a barra nativa do site empurrando para cima */
-            left: 0;
-            width: 100%;
-            height: calc(100% - 70px);
-            overflow: hidden;
-            background: #000;
-        }
-        .iframe-container-masked iframe {
-            width: 100%;
-            height: calc(100% + 140px);
-            margin-top: -70px; /* Puxa o conteúdo para cima cortando fora o cabeçalho original do buscador */
-            border: none;
-            transform: translateZ(0);
-            will-change: transform;
-        }
-
         .bingo-container-k {
             width: 100%;
             height: 100%;
@@ -328,7 +308,7 @@
         TV
     </button>
 
-    <!-- TELA DA SESSÃO TV KERNEL EMBUTIDA (COM MÁSCARA ANTI-BARRA EXTERNA) -->
+    <!-- TELA DA SESSÃO TV KERNEL EMBUTIDA (ISOLADA E RODA LISO) -->
     <div id="tvSessionScreen">
         <div class="top-command-bar-k">
             <div class="search-zone-k">
@@ -348,13 +328,9 @@
             <div id="tvWelcomeMsg" style="width:100%; height:100%; background: radial-gradient(circle, #111, #000); display:flex; align-items:center; justify-content:center; color:#d4af37; font-family:'Orbitron',sans-serif; font-size:18px; text-align:center; padding:20px;">
                 INSIRA UM TERMO ACIMA OU DIGITE BINGO
             </div>
-            
-            <!-- CONTÊINER MASCARADO QUE OCULTA A BARRA DE PESQUISA ORIGINAL DO BUSCADOR -->
-            <div id="iframeWrapperMask" class="iframe-container-masked" style="display:none;">
-                <iframe id="kernelIframe" allow="autoplay; encrypted-media; fullscreen"></iframe>
-            </div>
-
-            <div id="bingoWrapper" style="width:100%; height:100%; display:none; position:absolute; inset:0; z-index:10;"></div>
+            <!-- IFRAME COM RENDERIZAÇÃO ISOLADA DE HARDWARE PARA EVITAR TRAVAMENTO DE IMAGEM -->
+            <iframe id="kernelIframe" style="width:100%; height:100%; border:none; display:none; transform: translateZ(0); will-change: transform;" allow="autoplay; encrypted-media; fullscreen"></iframe>
+            <div id="bingoWrapper" style="width:100%; height:100%; display:none;"></div>
         </div>
     </div>
 
@@ -619,7 +595,7 @@
         }
         renderizarRecentes();
 
-        // --- CONTROLE DA SESSÃO TV KERNEL ULTRA FLUIDO (COM MÁSCARA ANTI-BUSCA EXTERNA) ---
+        // --- CONTROLE DA SESSÃO TV KERNEL ULTRA FLUIDO ---
         function abrirSessaoTv() {
             document.getElementById('tvSessionScreen').classList.add('active');
         }
@@ -632,7 +608,6 @@
             const input = document.getElementById('tv-input-k');
             const cmd = input.value.toUpperCase().trim();
             const welcomeMsg = document.getElementById('tvWelcomeMsg');
-            const iframeWrapperMask = document.getElementById('iframeWrapperMask');
             const iframe = document.getElementById('kernelIframe');
             const bingoWrapper = document.getElementById('bingoWrapper');
 
@@ -640,7 +615,7 @@
 
             if (cmd === "BINGO") {
                 welcomeMsg.style.display = 'none';
-                iframeWrapperMask.style.display = 'none';
+                iframe.style.display = 'none';
                 iframe.src = "";
                 
                 bingoWrapper.style.display = 'flex';
@@ -655,9 +630,8 @@
                 bingoWrapper.style.display = 'none';
                 bingoWrapper.innerHTML = "";
                 
-                iframeWrapperMask.style.display = 'block';
-                // Adicionamos filtros na URL do Bing para focar diretamente no grid de vídeos sem os menus superiores
-                iframe.src = `https://www.bing.com/videos/search?q=${encodeURIComponent(cmd)}&qsp=0&form=VDMHV2`;
+                iframe.style.display = 'block';
+                iframe.src = `https://www.bing.com/videos/search?q=${encodeURIComponent(cmd)}&FORM=VRFLTR`;
             }
             input.blur();
         }

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     
-    <title>DONY BURGUER'S - RASTREIO SUPREMO DESKTOP + TV KERNEL</title>
+    <title>DONY BURGUER'S - RASTREIO SUPREMO DESKTOP + TV KERNEL ULTRA LISO</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -151,15 +151,27 @@
             box-shadow: 0 0 40px rgba(234, 179, 8, 0.9);
         }
 
-        /* TELA DA SESSÃO TV KERNEL EMBUTIDA */
+        /* TELA DA SESSÃO TV KERNEL COM ACELERAÇÃO DE HARDWARE ISOLADA */
         #tvSessionScreen {
             position: fixed;
             inset: 0;
             background: #000;
             z-index: 9500;
-            display: none;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+            display: flex;
             flex-direction: column;
+            will-change: opacity;
+            transform: translateZ(0);
         }
+        #tvSessionScreen.active {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+
         .top-command-bar-k {
             position: fixed;
             top: 0;
@@ -235,6 +247,26 @@
             transition: 0.3s;
         }
         .btn-voltar-painel-k:hover { transform: scale(1.05); }
+        
+        /* CONTENEDOR DO IFRAME COM TRUQUE DE CORTE PARA OCULTAR O TOPO DO SITE EXTERNO */
+        .iframe-container-masked {
+            position: absolute;
+            top: 70px; /* Esconde a barra nativa do site empurrando para cima */
+            left: 0;
+            width: 100%;
+            height: calc(100% - 70px);
+            overflow: hidden;
+            background: #000;
+        }
+        .iframe-container-masked iframe {
+            width: 100%;
+            height: calc(100% + 140px);
+            margin-top: -70px; /* Puxa o conteúdo para cima cortando fora o cabeçalho original do buscador */
+            border: none;
+            transform: translateZ(0);
+            will-change: transform;
+        }
+
         .bingo-container-k {
             width: 100%;
             height: 100%;
@@ -296,7 +328,7 @@
         TV
     </button>
 
-    <!-- TELA DA SESSÃO TV KERNEL EMBUTIDA -->
+    <!-- TELA DA SESSÃO TV KERNEL EMBUTIDA (COM MÁSCARA ANTI-BARRA EXTERNA) -->
     <div id="tvSessionScreen">
         <div class="top-command-bar-k">
             <div class="search-zone-k">
@@ -313,26 +345,18 @@
         </div>
 
         <div id="tvViewport" class="w-full h-full flex items-center justify-center bg-black relative pt-20" style="width:100%; height:100%;">
-            <div style="width:100%; height:100%; background: radial-gradient(circle, #111, #000); display:flex; align-items:center; justify-content:center; color:#d4af37; font-family:'Orbitron',sans-serif; font-size:18px; text-align:center; padding:20px;">
+            <div id="tvWelcomeMsg" style="width:100%; height:100%; background: radial-gradient(circle, #111, #000); display:flex; align-items:center; justify-content:center; color:#d4af37; font-family:'Orbitron',sans-serif; font-size:18px; text-align:center; padding:20px;">
                 INSIRA UM TERMO ACIMA OU DIGITE BINGO
             </div>
+            
+            <!-- CONTÊINER MASCARADO QUE OCULTA A BARRA DE PESQUISA ORIGINAL DO BUSCADOR -->
+            <div id="iframeWrapperMask" class="iframe-container-masked" style="display:none;">
+                <iframe id="kernelIframe" allow="autoplay; encrypted-media; fullscreen"></iframe>
+            </div>
+
+            <div id="bingoWrapper" style="width:100%; height:100%; display:none; position:absolute; inset:0; z-index:10;"></div>
         </div>
     </div>
-
-    <!-- TEMPLATES DO KERNEL -->
-    <template id="kernelTemplate">
-        <div style="width:100%; height:100%; position:absolute; inset:0; background:#000;">
-            <iframe id="kernelIframe" style="width:100%; height:100%; border:none;" allow="autoplay; encrypted-media"></iframe>
-        </div>
-    </template>
-
-    <template id="bingoTemplate">
-        <div class="bingo-container-k">
-            <h1 style="color:#d4af37; font-family:'Orbitron', sans-serif; font-size:45px; margin-bottom: 20px;">BINGO JDP</h1>
-            <div id="bola-bingo-k">--</div>
-            <button onclick="sortearBingo()" style="margin-top:30px; padding:15px 40px; background:#d4af37; color:black; font-weight:bold; cursor:pointer; border:none; border-radius:8px; font-family:'Orbitron', sans-serif; font-size: 16px; box-shadow: 0 0 20px #d4af37;">SORTEAR BOLA</button>
-        </div>
-    </template>
 
     <!-- ALERTA DE BUZINA DO MOTOBOY -->
     <div id="alerta-buzina">
@@ -517,7 +541,7 @@
         <div id="map"></div>
     </div>
 
-    <!-- JAVASCRIPT GERAL, TELEMETRIA, MAPA E KERNEL TV EMBUTIDO -->
+    <!-- JAVASCRIPT GERAL, TELEMETRIA, MAPA E KERNEL TV ULTRA LISO -->
     <script>
         const firebaseConfig = { databaseURL: "https://dony-burguers-default-rtdb.firebaseio.com" };
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
@@ -595,35 +619,45 @@
         }
         renderizarRecentes();
 
-        // --- CONTROLE DO KERNEL TV EMBUTIDO ---
+        // --- CONTROLE DA SESSÃO TV KERNEL ULTRA FLUIDO (COM MÁSCARA ANTI-BUSCA EXTERNA) ---
         function abrirSessaoTv() {
-            const screen = document.getElementById('tvSessionScreen');
-            screen.style.display = 'flex';
+            document.getElementById('tvSessionScreen').classList.add('active');
         }
 
         function voltarAoPainel() {
-            const screen = document.getElementById('tvSessionScreen');
-            screen.style.display = 'none';
+            document.getElementById('tvSessionScreen').classList.remove('active');
         }
 
         function ativarBuscaKernel() {
             const input = document.getElementById('tv-input-k');
             const cmd = input.value.toUpperCase().trim();
-            const viewport = document.getElementById('tvViewport');
+            const welcomeMsg = document.getElementById('tvWelcomeMsg');
+            const iframeWrapperMask = document.getElementById('iframeWrapperMask');
+            const iframe = document.getElementById('kernelIframe');
+            const bingoWrapper = document.getElementById('bingoWrapper');
 
             if (!cmd) return;
 
             if (cmd === "BINGO") {
-                const templateBingo = document.getElementById('bingoTemplate').content.cloneNode(true);
-                viewport.innerHTML = '';
-                viewport.appendChild(templateBingo);
-            } else {
-                const templateKernel = document.getElementById('kernelTemplate').content.cloneNode(true);
-                viewport.innerHTML = '';
-                viewport.appendChild(templateKernel);
+                welcomeMsg.style.display = 'none';
+                iframeWrapperMask.style.display = 'none';
+                iframe.src = "";
                 
-                const iframe = document.getElementById('kernelIframe');
-                iframe.src = `https://www.bing.com/videos/search?q=${encodeURIComponent(cmd)}&FORM=VRFLTR`;
+                bingoWrapper.style.display = 'flex';
+                bingoWrapper.innerHTML = `
+                    <div class="bingo-container-k">
+                        <h1 style="color:#d4af37; font-family:'Orbitron', sans-serif; font-size:45px; margin-bottom: 20px;">BINGO JDP</h1>
+                        <div id="bola-bingo-k">--</div>
+                        <button onclick="sortearBingo()" style="margin-top:30px; padding:15px 40px; background:#d4af37; color:black; font-weight:bold; cursor:pointer; border:none; border-radius:8px; font-family:'Orbitron', sans-serif; font-size: 16px; box-shadow: 0 0 20px #d4af37;">SORTEAR BOLA</button>
+                    </div>`;
+            } else {
+                welcomeMsg.style.display = 'none';
+                bingoWrapper.style.display = 'none';
+                bingoWrapper.innerHTML = "";
+                
+                iframeWrapperMask.style.display = 'block';
+                // Adicionamos filtros na URL do Bing para focar diretamente no grid de vídeos sem os menus superiores
+                iframe.src = `https://www.bing.com/videos/search?q=${encodeURIComponent(cmd)}&qsp=0&form=VDMHV2`;
             }
             input.blur();
         }

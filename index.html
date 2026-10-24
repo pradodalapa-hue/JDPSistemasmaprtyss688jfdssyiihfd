@@ -124,6 +124,43 @@
             transform: translateX(-50%) translateY(0);
             opacity: 1;
         }
+
+        /* ESTILO DO BOTÃO WHATSAPP RESPLANDECENTE */
+        .btn-whatsapp-resplendor {
+            position: relative;
+            isolation: isolate;
+        }
+
+        /* CAMADA DO BRILHO/RESPLENDOR */
+        .btn-whatsapp-resplendor .efeito-resplendor {
+            position: absolute;
+            top: 0;
+            left: -150%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                120deg,
+                transparent 0%,
+                rgba(255, 255, 255, 0.03) 20%,
+                rgba(255, 215, 0, 0.4) 50%, /* BRILHO DOURADO RESPLANDECENTE */
+                rgba(52, 211, 153, 0.5) 60%, /* TOQUE VERDE NEON */
+                transparent 100%
+            );
+            transform: skewX(-25deg);
+            animation: passarResplendor 4s infinite ease-in-out;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        /* ANIMAÇÃO PASSANDO DA ESQUERDA PARA A DIREITA LENTAMENTE */
+        @keyframes passarResplendor {
+            0% {
+                left: -150%;
+            }
+            50%, 100% {
+                left: 150%;
+            }
+        }
     </style>
 </head>
 <body class="flex justify-center items-center min-h-screen p-4 lg:p-8 text-gray-100">
@@ -277,12 +314,23 @@
 
                 </div>
 
-                <!-- RODAPÉ -->
+                <!-- RODAPÉ COM BOTÃO WHATSAPP RESPLANDECENTE -->
                 <footer class="text-center pt-4 border-t border-gray-800/80 flex items-center justify-between text-xs text-gray-500">
+                    
+                    <!-- BOTÃO WHATSAPP COM EFEITO SHINE/RESPLENDOR -->
                     <a href="https://wa.me/5592984000000?text=Olá,%20preciso%20de%20ajuda%20com%20meu%20pedido" target="_blank" 
-                       class="inline-flex items-center gap-2 hover:text-emerald-400 transition bg-slate-900/90 px-4 py-2 rounded-xl border border-white/5 font-semibold">
-                        <i class="fab fa-whatsapp text-emerald-400 text-base"></i> Atendimento WhatsApp Supreme
+                       class="btn-whatsapp-resplendor relative overflow-hidden inline-flex items-center gap-2.5 bg-slate-900/90 text-gray-200 hover:text-emerald-400 transition px-5 py-2.5 rounded-xl border border-emerald-500/30 font-semibold shadow-lg">
+                        
+                        <!-- ÍCONE DO WHATSAPP -->
+                        <i class="fab fa-whatsapp text-emerald-400 text-lg relative z-10"></i>
+                        
+                        <!-- TEXTO DO BOTÃO -->
+                        <span class="relative z-10 font-orbitron tracking-wide text-xs">Atendimento WhatsApp Supreme</span>
+
+                        <!-- CAMADA DO RESPLENDOR (PASSANDO DA ESQUERDA PARA A DIREITA) -->
+                        <span class="efeito-resplendor"></span>
                     </a>
+
                     <p class="font-medium">Dony Burguer's Systems © 2026 • Modo Desktop Supreme</p>
                 </footer>
 
@@ -300,7 +348,7 @@
         <div id="map"></div>
     </div>
 
-    <!-- JAVASCRIPT DE TELEMETRIA, MÁQUINA DE ESTADOS E PUBLICIDADE SOBERANA -->
+    <!-- JAVASCRIPT DE TELEMETRIA, MÁQUINA DE ESTADOS E PUBLICIDADE BLINDADA -->
     <script>
         const firebaseConfig = { databaseURL: "https://dony-burguers-default-rtdb.firebaseio.com" };
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
@@ -532,32 +580,57 @@
             document.getElementById('map-container-wrapper').style.display = "none";
         }
 
-        // --- MOTOR DE PUBLICIDADE SOBERANO (PRADO_68 / PRADO_67) ---
+        // --- MOTOR DE PUBLICIDADE BLINDADO E CORRIGIDO (PRADO_68 / PRADO_67) ---
         function motorPublicidade() {
-            // Escuta a esteira prado_68
             db.ref('publicidade/prado_68').on('value', snap => {
-                adsCache = [];
-                if (snap.exists()) {
-                    snap.forEach(item => adsCache.push(item.val()));
+                let tempCache = [];
+                const data = snap.val();
+
+                if (data) {
+                    if (Array.isArray(data)) {
+                        tempCache = data.filter(Boolean);
+                    } else if (typeof data === 'object') {
+                        Object.values(data).forEach(val => {
+                            if (typeof val === 'string') {
+                                tempCache.push(val);
+                            } else if (val && typeof val === 'object' && val.url) {
+                                tempCache.push(val.url);
+                            }
+                        });
+                    }
                 }
-                // Se prado_68 estiver vazia, tenta a esteira de backup prado_67
-                if (adsCache.length === 0) {
-                    db.ref('publicidade/prado_67').once('value', s2 => {
-                        if (s2.exists()) s2.forEach(i => adsCache.push(i.val()));
-                    });
-                }
-                
-                // Se já houver mídias no cache, exibe imediatamente a primeira
-                if (adsCache.length > 0) {
+
+                if (tempCache.length > 0) {
+                    adsCache = tempCache;
+                    if (adIndex >= adsCache.length) adIndex = 0;
                     renderizarMidiaAtual();
+                } else {
+                    db.ref('publicidade/prado_67').once('value', s2 => {
+                        let backupCache = [];
+                        const data2 = s2.val();
+                        if (data2) {
+                            if (Array.isArray(data2)) {
+                                backupCache = data2.filter(Boolean);
+                            } else if (typeof data2 === 'object') {
+                                Object.values(data2).forEach(val => {
+                                    if (typeof val === 'string') backupCache.push(val);
+                                    else if (val && typeof val === 'object' && val.url) backupCache.push(val.url);
+                                });
+                            }
+                        }
+                        if (backupCache.length > 0) {
+                            adsCache = backupCache;
+                            if (adIndex >= adsCache.length) adIndex = 0;
+                            renderizarMidiaAtual();
+                        }
+                    });
                 }
             });
 
             if (timerCarrossel) clearInterval(timerCarrossel);
             
-            // Alterna as mídias da publicidade a cada 6 segundos sem parar
             timerCarrossel = setInterval(() => {
-                if (adsCache.length > 0) {
+                if (adsCache.length > 1) {
                     adIndex = (adIndex + 1) % adsCache.length;
                     renderizarMidiaAtual();
                 }
@@ -569,6 +642,8 @@
             if (!holder || adsCache.length === 0) return;
 
             const url = adsCache[adIndex] || adsCache[0];
+            if (!url) return;
+
             const isVideo = url.match(/\.(mp4|webm|ogg|mov)$/i) || url.includes("data:video");
 
             holder.style.opacity = '0';

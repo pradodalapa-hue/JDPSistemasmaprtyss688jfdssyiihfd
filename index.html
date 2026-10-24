@@ -2,8 +2,7 @@
 <html lang="pt-BR" class="dark">
 <head>
     <meta charset="UTF-8">
-    
-    <title>DONY BURGUER'S - RASTREIO SUPREMO DESKTOP + TV KERNEL</title>
+    <title>DONY BURGUER'S - RASTREIO SUPREMO DESKTOP + TV KERNEL ULTRA LISO</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -308,7 +307,7 @@
         TV
     </button>
 
-    <!-- TELA DA SESSÃO TV KERNEL EMBUTIDA (ISOLADA E RODA LISO) -->
+    <!-- TELA DA SESSÃO TV KERNEL EMBUTIDA -->
     <div id="tvSessionScreen">
         <div class="top-command-bar-k">
             <div class="search-zone-k">
@@ -328,7 +327,6 @@
             <div id="tvWelcomeMsg" style="width:100%; height:100%; background: radial-gradient(circle, #111, #000); display:flex; align-items:center; justify-content:center; color:#d4af37; font-family:'Orbitron',sans-serif; font-size:18px; text-align:center; padding:20px;">
                 INSIRA UM TERMO ACIMA OU DIGITE BINGO
             </div>
-            <!-- IFRAME COM RENDERIZAÇÃO ISOLADA DE HARDWARE PARA EVITAR TRAVAMENTO DE IMAGEM -->
             <iframe id="kernelIframe" style="width:100%; height:100%; border:none; display:none; transform: translateZ(0); will-change: transform;" allow="autoplay; encrypted-media; fullscreen"></iframe>
             <div id="bingoWrapper" style="width:100%; height:100%; display:none;"></div>
         </div>
@@ -387,11 +385,6 @@
                 <button onclick="rastrearPedidoManual()" class="gold-gradient-btn w-full py-4 rounded-2xl text-slate-950 font-black text-base tracking-wide flex items-center justify-center gap-3 shadow-gold-glow uppercase font-orbitron">
                     <i class="fas fa-search"></i> CONSULTAR STATUS
                 </button>
-
-                <!-- Recentes -->
-                <div id="containerRecentes" class="mt-4 flex items-center gap-2 overflow-x-auto text-xs pb-1">
-                    <span class="text-gray-500 font-semibold">Recentes:</span>
-                </div>
             </section>
 
             <!-- 3. BOTÃO DO MAPA EM TEMPO REAL + DETALHES -->
@@ -490,13 +483,8 @@
                     <a href="https://wa.me/5592984000000?text=Olá,%20preciso%20de%20ajuda%20com%20meu%20pedido" target="_blank" 
                        class="btn-whatsapp-resplendor relative overflow-hidden inline-flex items-center gap-2.5 bg-slate-900/90 text-gray-200 hover:text-emerald-400 transition px-5 py-2.5 rounded-xl border border-emerald-500/30 font-semibold shadow-lg">
                         
-                        <!-- ÍCONE DO WHATSAPP -->
                         <i class="fab fa-whatsapp text-emerald-400 text-lg relative z-10"></i>
-                        
-                        <!-- TEXTO DO BOTÃO -->
                         <span class="relative z-10 font-orbitron tracking-wide text-xs">Atendimento WhatsApp Supreme</span>
-
-                        <!-- CAMADA DO RESPLENDOR -->
                         <span class="efeito-resplendor"></span>
                     </a>
 
@@ -541,7 +529,8 @@
         const audioBuzinaElement = new Audio(AUDIO_BUZINA_URL);
 
         if (idPedidoBuscado) {
-            document.getElementById('inputPedido').value = idPedidoBuscado;
+            idPedidoBuscado = idPedidoBuscado.replace('#', '').trim().toUpperCase();
+            document.getElementById('inputPedido').value = '#' + idPedidoBuscado;
             iniciarEscutaFirebase(idPedidoBuscado);
         }
 
@@ -552,8 +541,8 @@
                 alert("Por favor, digite o código do seu pedido!");
                 return;
             }
-            if (!id.startsWith('#')) id = '#' + id;
-            idPedidoBuscado = id.replace('#', '');
+            idPedidoBuscado = id.replace('#', '').trim();
+            input.value = '#' + idPedidoBuscado;
             window.history.replaceState({}, '', `?pedido=${idPedidoBuscado}`);
             iniciarEscutaFirebase(idPedidoBuscado);
         }
@@ -562,38 +551,6 @@
             document.getElementById('inputPedido').value = '';
             document.getElementById('inputPedido').focus();
         }
-
-        function carregarPedido(idClean) {
-            document.getElementById('inputPedido').value = idClean;
-            idPedidoBuscado = idClean.replace('#', '');
-            window.history.replaceState({}, '', `?pedido=${idPedidoBuscado}`);
-            iniciarEscutaFirebase(idPedidoBuscado);
-        }
-
-        function salvarRecente(idClean) {
-            let recentes = JSON.parse(localStorage.getItem('recentes_dony') || '[]');
-            if (!recentes.includes(idClean)) {
-                recentes.unshift(idClean);
-                if (recentes.length > 3) recentes.pop();
-                localStorage.setItem('recentes_dony', JSON.stringify(recentes));
-                renderizarRecentes();
-            }
-        }
-
-        function renderizarRecentes() {
-            let recentes = JSON.parse(localStorage.getItem('recentes_dony') || '[]');
-            const container = document.getElementById('containerRecentes');
-            let html = '<span class="text-gray-500 font-semibold">Recentes:</span>';
-            if (recentes.length === 0) {
-                container.innerHTML = html + '<span class="text-gray-600 text-[11px] ml-1">Nenhum</span>';
-                return;
-            }
-            recentes.forEach(item => {
-                html += `<button onclick="carregarPedido('${item}')" class="bg-slate-800/90 hover:bg-slate-700 text-yellow-400 px-3 py-1.5 rounded-xl border border-yellow-500/20 transition font-mono">${item}</button>`;
-            });
-            container.innerHTML = html;
-        }
-        renderizarRecentes();
 
         // --- CONTROLE DA SESSÃO TV KERNEL ULTRA FLUIDO ---
         function abrirSessaoTv() {
@@ -648,10 +605,11 @@
             }
         });
 
-        // --- ESCUTA FIREBASE ---
+        // --- ESCUTA FIREBASE PURA PELA URL ---
         function iniciarEscutaFirebase(id) {
+            if (!id) return;
+            id = id.replace('#', '').trim().toUpperCase();
             destruirListenersAnteriores();
-            salvarRecente('#' + id);
 
             refPendente = db.ref(`lojas/${LOJA_ID}/producao_pendente/${id}`);
             refRastreio = db.ref(`lojas/${LOJA_ID}/rastreio_ativo/${id}`);
@@ -669,10 +627,14 @@
             dadosPendente = null; dadosRastreio = null; dadosConcluido = null;
         }
 
-        // --- MÁQUINA DE ESTADOS ---
+        // --- MÁQUINA DE ESTADOS EXATA ---
         function processarFusaoDeEstados() {
             document.getElementById('idDisplay').innerText = `#${idPedidoBuscado}`;
 
+            if (dadosConcluido || (dadosRastreio && (dadosRastreio.status === "entregue" || dadosRastreio.status === "CONCLUIDO" || dadosRastreio.expirado === true))) {
+                exibirEstadoConcluido();
+                return;
+            }
             if (dadosRastreio && (dadosRastreio.na_pista === true || dadosRastreio.status === "em_rota")) {
                 exibirEstadoEmRota();
                 return;
@@ -683,10 +645,6 @@
             }
             if (dadosPendente && (dadosPendente.status === "ESPERA" || dadosPendente.status === "PREPARANDO" || dadosPendente.status === "Pendente")) {
                 exibirEstadoPedidoAceito();
-                return;
-            }
-            if (dadosConcluido || (dadosRastreio && (dadosRastreio.status === "entregue" || dadosRastreio.status === "CONCLUIDO" || dadosRastreio.expirado === true))) {
-                exibirEstadoConcluido();
                 return;
             }
             if (dadosRastreio && dadosRastreio.giro_autorizado !== true) {

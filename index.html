@@ -263,25 +263,16 @@
                     </div>
                 </div>
 
-                <!-- TELÃO DE EXIBIÇÃO: MENSAGEM DE STATUS OU PUBLICIDADE (PRADO_67 / PRADO_68) -->
+                <!-- TELÃO DE EXIBIÇÃO: TELEVISÃO DE PUBLICIDADE CONTÍNUA (PRADO_68 / PRADO_67) -->
                 <div id="quadradoDisplay" class="bg-slate-950/90 rounded-3xl p-6 border border-white/10 text-center relative overflow-hidden min-h-[300px] flex flex-col items-center justify-center shadow-inner my-auto">
                     
-                    <!-- CONTEÚDO DE STATUS DINÂMICO -->
-                    <div id="msgDisplay" class="flex flex-col items-center justify-center w-full">
-                        <div class="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-cyan-500/10 text-cyan-400 mb-4 border border-cyan-500/30 shadow-lg">
-                            <i class="fas fa-search-dollar text-3xl"></i>
+                    <div id="containerPublicidade" class="w-full h-full absolute inset-0 flex items-center justify-center bg-slate-950">
+                        <div id="midiaHolder" class="w-full h-full flex items-center justify-center">
+                            <div class="flex flex-col items-center justify-center text-gray-500">
+                                <i class="fas fa-photo-film text-4xl mb-2 animate-pulse text-amber-500"></i>
+                                <span class="text-xs font-orbitron uppercase tracking-widest">Iniciando Telão de Publicidade...</span>
+                            </div>
                         </div>
-                        <h3 class="text-white font-black text-xl tracking-wide uppercase mb-2 font-orbitron">
-                            INSIRA O ID DO SEU PEDIDO
-                        </h3>
-                        <p class="text-sm text-gray-400 leading-relaxed max-w-md mx-auto">
-                            Digite o código do seu pedido (Ex: #JDP-W22261) ao lado para rastrear a entrega em tempo real.
-                        </p>
-                    </div>
-
-                    <!-- CONTAINER DE MÍDIA DE PUBLICIDADE (TV) -->
-                    <div id="containerPublicidade" class="hidden w-full h-full absolute inset-0 flex items-center justify-center bg-slate-950">
-                        <div id="midiaHolder" class="w-full h-full flex items-center justify-center"></div>
                     </div>
 
                 </div>
@@ -309,7 +300,7 @@
         <div id="map"></div>
     </div>
 
-    <!-- JAVASCRIPT DE TELEMETRIA, MÁQUINA DE ESTADOS E PUBLICIDADE -->
+    <!-- JAVASCRIPT DE TELEMETRIA, MÁQUINA DE ESTADOS E PUBLICIDADE SOBERANA -->
     <script>
         const firebaseConfig = { databaseURL: "https://dony-burguers-default-rtdb.firebaseio.com" };
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
@@ -447,13 +438,6 @@
             document.getElementById('badgeDisplay').innerHTML = '<span class="w-3 h-3 rounded-full bg-yellow-400 animate-pulse"></span> COZINHA';
             document.getElementById('badgeDisplay').className = "px-5 py-2 rounded-full bg-yellow-500/10 border border-yellow-500/40 text-yellow-400 font-extrabold text-sm tracking-widest uppercase flex items-center gap-2 font-orbitron shadow-gold-glow";
             document.getElementById('txtStatusDetalhe').innerText = "EM PREPARAÇÃO NA COZINHA";
-            document.getElementById('msgDisplay').innerHTML = `
-                <div class="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-yellow-500/10 text-yellow-400 mb-4 border border-yellow-500/30 shadow-lg">
-                    <i class="fas fa-fire text-3xl"></i>
-                </div>
-                <h3 class="text-white font-black text-xl tracking-wide uppercase mb-2 font-orbitron">PEDIDO NA COZINHA</h3>
-                <p class="text-sm text-gray-400 leading-relaxed max-w-md mx-auto">Seu pedido foi aceito e já está sendo preparado com todo capricho!</p>
-            `;
             document.getElementById('btnMapa').style.display = "none";
             atualizarStepper(25, 'bg-yellow-500 text-slate-950 shadow-md', 'bg-gray-800 text-gray-500', 'bg-gray-800 text-gray-400', 'bg-gray-800 text-gray-500');
         }
@@ -462,13 +446,6 @@
             document.getElementById('badgeDisplay').innerHTML = '<span class="w-3 h-3 rounded-full bg-cyan-400 animate-pulse"></span> PRONTO';
             document.getElementById('badgeDisplay').className = "px-5 py-2 rounded-full bg-cyan-500/10 border border-cyan-500/40 text-cyan-400 font-extrabold text-sm tracking-widest uppercase flex items-center gap-2 font-orbitron";
             document.getElementById('txtStatusDetalhe').innerText = "PRONTO PARA DESPACHO";
-            document.getElementById('msgDisplay').innerHTML = `
-                <div class="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-cyan-500/10 text-cyan-400 mb-4 border border-cyan-500/30 shadow-lg">
-                    <i class="fas fa-hamburger text-3xl"></i>
-                </div>
-                <h3 class="text-white font-black text-xl tracking-wide uppercase mb-2 font-orbitron">PEDIDO PRONTO!</h3>
-                <p class="text-sm text-gray-400 leading-relaxed max-w-md mx-auto">Tudo pronto! Aguardando o motoboy iniciar a rota.</p>
-            `;
             document.getElementById('btnMapa').style.display = "none";
             atualizarStepper(60, 'bg-yellow-500 text-slate-950 shadow-md', 'bg-yellow-500 text-slate-950 shadow-md', 'bg-gray-800 text-gray-400', 'bg-gray-800 text-gray-500');
         }
@@ -477,13 +454,6 @@
             document.getElementById('badgeDisplay').innerHTML = '<span class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></span> A CAMINHO';
             document.getElementById('badgeDisplay').className = "px-5 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/40 text-emerald-400 font-extrabold text-sm tracking-widest uppercase flex items-center gap-2 font-orbitron shadow-green-glow";
             document.getElementById('txtStatusDetalhe').innerText = "EM ROTA DE ENTREGA";
-            document.getElementById('msgDisplay').innerHTML = `
-                <div class="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-emerald-500/10 text-emerald-400 mb-4 border border-emerald-500/30 shadow-lg animate-bounce">
-                    <i class="fas fa-motorcycle text-3xl"></i>
-                </div>
-                <h3 class="text-white font-black text-xl tracking-wide uppercase mb-2 font-orbitron">PEDIDO A CAMINHO!</h3>
-                <p class="text-sm text-gray-400 leading-relaxed max-w-md mx-auto">O entregador está a caminho. Clique no botão verde abaixo para abrir o mapa em tempo real.</p>
-            `;
             document.getElementById('btnMapa').style.display = "flex";
             atualizarStepper(85, 'bg-yellow-500 text-slate-950 shadow-md', 'bg-yellow-500 text-slate-950 shadow-md', 'bg-emerald-500 text-slate-950 shadow-green-glow animate-pulse', 'bg-gray-800 text-gray-500');
         }
@@ -492,13 +462,6 @@
             document.getElementById('badgeDisplay').innerHTML = '<span class="w-3 h-3 rounded-full bg-gray-500"></span> ENTREGUE';
             document.getElementById('badgeDisplay').className = "px-5 py-2 rounded-full bg-slate-800 border border-slate-700 text-gray-400 font-extrabold text-sm tracking-widest uppercase flex items-center gap-2 font-orbitron";
             document.getElementById('txtStatusDetalhe').innerText = "PEDIDO CONCLUÍDO";
-            document.getElementById('msgDisplay').innerHTML = `
-                <div class="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-emerald-500/10 text-emerald-400 mb-4 border border-emerald-500/30 shadow-lg">
-                    <i class="fas fa-check-circle text-3xl"></i>
-                </div>
-                <h3 class="text-white font-black text-xl tracking-wide uppercase mb-2 font-orbitron">ENTREGA CONCLUÍDA!</h3>
-                <p class="text-sm text-gray-400 leading-relaxed max-w-md mx-auto">Obrigado pela preferência na Dony Burguer's! Bom apetite.</p>
-            `;
             document.getElementById('btnMapa').style.display = "none";
             atualizarStepper(100, 'bg-yellow-500 text-slate-950', 'bg-yellow-500 text-slate-950', 'bg-emerald-500 text-slate-950', 'bg-emerald-500 text-slate-950');
         }
@@ -507,13 +470,6 @@
             document.getElementById('badgeDisplay').innerHTML = '<span class="w-3 h-3 rounded-full bg-red-500 animate-pulse"></span> PAGAMENTO';
             document.getElementById('badgeDisplay').className = "px-5 py-2 rounded-full bg-red-500/10 border border-red-500/40 text-red-400 font-extrabold text-sm tracking-widest uppercase flex items-center gap-2 font-orbitron";
             document.getElementById('txtStatusDetalhe').innerText = "AGUARDANDO PAGAMENTO";
-            document.getElementById('msgDisplay').innerHTML = `
-                <div class="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-red-500/10 text-red-400 mb-4 border border-red-500/30 shadow-lg">
-                    <i class="fas fa-wallet text-3xl"></i>
-                </div>
-                <h3 class="text-white font-black text-xl tracking-wide uppercase mb-2 font-orbitron">AGUARDANDO PAGAMENTO</h3>
-                <p class="text-sm text-gray-400 leading-relaxed max-w-md mx-auto">Efetue o pagamento para liberar o pedido na linha de produção.</p>
-            `;
             document.getElementById('btnMapa').style.display = "none";
         }
 
@@ -521,13 +477,6 @@
             document.getElementById('badgeDisplay').innerHTML = '<span class="w-3 h-3 rounded-full bg-red-500"></span> NÃO ENCONTRADO';
             document.getElementById('badgeDisplay').className = "px-5 py-2 rounded-full bg-red-500/10 border border-red-500/40 text-red-400 font-extrabold text-sm tracking-widest uppercase flex items-center gap-2 font-orbitron";
             document.getElementById('txtStatusDetalhe').innerText = "PEDIDO NÃO LOCALIZADO";
-            document.getElementById('msgDisplay').innerHTML = `
-                <div class="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-red-500/10 text-red-400 mb-4 border border-red-500/30 shadow-lg">
-                    <i class="fas fa-exclamation-triangle text-3xl"></i>
-                </div>
-                <h3 class="text-white font-black text-xl tracking-wide uppercase mb-2 font-orbitron">PEDIDO NÃO ENCONTRADO</h3>
-                <p class="text-sm text-gray-400 leading-relaxed max-w-md mx-auto">Verifique o número do ID digitado e tente novamente.</p>
-            `;
             document.getElementById('btnMapa').style.display = "none";
         }
 
@@ -583,53 +532,55 @@
             document.getElementById('map-container-wrapper').style.display = "none";
         }
 
-        // --- MOTOR DE PUBLICIDADE REALTIME (PRADO_67 / PRADO_68) ---
+        // --- MOTOR DE PUBLICIDADE SOBERANO (PRADO_68 / PRADO_67) ---
         function motorPublicidade() {
+            // Escuta a esteira prado_68
             db.ref('publicidade/prado_68').on('value', snap => {
                 adsCache = [];
                 if (snap.exists()) {
                     snap.forEach(item => adsCache.push(item.val()));
                 }
+                // Se prado_68 estiver vazia, tenta a esteira de backup prado_67
                 if (adsCache.length === 0) {
                     db.ref('publicidade/prado_67').once('value', s2 => {
                         if (s2.exists()) s2.forEach(i => adsCache.push(i.val()));
                     });
                 }
+                
+                // Se já houver mídias no cache, exibe imediatamente a primeira
+                if (adsCache.length > 0) {
+                    renderizarMidiaAtual();
+                }
             });
 
             if (timerCarrossel) clearInterval(timerCarrossel);
+            
+            // Alterna as mídias da publicidade a cada 6 segundos sem parar
             timerCarrossel = setInterval(() => {
-                const elPadrao = document.getElementById('msgDisplay');
-                const elPub = document.getElementById('containerPublicidade');
-                const holder = document.getElementById('midiaHolder');
-                
-                // Se o usuário digitou um ID e está vendo o status, não injeta publicidade para não atrapalhar
-                const idInput = document.getElementById('inputPedido').value.trim();
-                if (idInput && adsCache.length > 0 && !dadosRastreio?.na_pista) {
-                    // Mantém estado ativo do pedido
-                    return;
-                }
-
                 if (adsCache.length > 0) {
-                    elPub.classList.remove('hidden');
                     adIndex = (adIndex + 1) % adsCache.length;
-                    const url = adsCache[adIndex];
-                    const isVideo = url.match(/\.(mp4|webm|ogg|mov)$/i) || url.includes("data:video");
-
-                    holder.style.opacity = '0';
-                    setTimeout(() => {
-                        if (isVideo) {
-                            holder.innerHTML = `<video src="${url}" autoplay loop muted playsinline class="w-full h-full object-contain bg-black"></video>`;
-                        } else {
-                            holder.innerHTML = `<img src="${url}" alt="Publicidade Dony" class="w-full h-full object-contain bg-black" onerror="this.src='https://via.placeholder.com/1200x600/020617/06b6d4?text=DONY+BURGUERS'">`;
-                        }
-                        holder.style.transition = 'opacity 0.5s ease-in-out';
-                        holder.style.opacity = '1';
-                    }, 250);
-                } else {
-                    elPub.classList.add('hidden');
+                    renderizarMidiaAtual();
                 }
-            }, 8000);
+            }, 6000);
+        }
+
+        function renderizarMidiaAtual() {
+            const holder = document.getElementById('midiaHolder');
+            if (!holder || adsCache.length === 0) return;
+
+            const url = adsCache[adIndex] || adsCache[0];
+            const isVideo = url.match(/\.(mp4|webm|ogg|mov)$/i) || url.includes("data:video");
+
+            holder.style.opacity = '0';
+            setTimeout(() => {
+                if (isVideo) {
+                    holder.innerHTML = `<video src="${url}" autoplay loop muted playsinline class="w-full h-full object-contain bg-black"></video>`;
+                } else {
+                    holder.innerHTML = `<img src="${url}" alt="Publicidade Dony" class="w-full h-full object-contain bg-black" onerror="this.src='https://via.placeholder.com/1200x600/020617/06b6d4?text=DONY+BURGUERS'">`;
+                }
+                holder.style.transition = 'opacity 0.5s ease-in-out';
+                holder.style.opacity = '1';
+            }, 200);
         }
 
         motorPublicidade();

@@ -1,242 +1,118 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" class="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DONY BURGUER'S - RASTREIO SUPREMO DO CLIENTE</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Firebase SDK Compat -->
+    <title>DONY BURGUER'S - RASTREIO SUPREMO DESKTOP</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#090d16',
+                        cardBg: '#111827',
+                        gold: {
+                            400: '#facc15',
+                            500: '#eab308',
+                            600: '#ca8a04',
+                            glow: '#ffd700'
+                        },
+                        neonGreen: {
+                            400: '#34d399',
+                            500: '#10b981',
+                            glow: '#00ff88'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
+                        orbitron: ['Orbitron', 'sans-serif']
+                    },
+                    boxShadow: {
+                        'gold-glow': '0 0 25px rgba(234, 179, 8, 0.3)',
+                        'green-glow': '0 0 30px rgba(16, 185, 129, 0.4)',
+                        'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.37)'
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Firebase SDK Compat (v9) -->
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
     
     <!-- Leaflet Engine -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-         
+
     <!-- Google Fonts & FontAwesome -->
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <style>
-        :root {
-            --bg: #020617;
-            --card: #0f172a;
-            --cyan: #06b6d4;
-            --gold: #fde047;
-            --red: #ef4444;
-            --green: #22c55e;
-            --jdp-gold-gradient: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
+        body {
+            background: radial-gradient(circle at top center, #1e1b4b 0%, #090d16 50%, #030712 100%);
+            min-height: 100vh;
+            color: #f3f4f6;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            overflow-x: hidden;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body, html {
-            background: var(--bg);
-            color: #fff;
-            font-family: 'Inter', sans-serif;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
+        .glass-card {
+            background: rgba(17, 24, 39, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        /* --- TELA DE PORTAL / STATUS E CONSULTA DE ID --- */
-        #portal-container {
-            position: fixed;
-            inset: 0;
-            background: var(--bg);
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            overflow-y: auto;
-            transition: all 0.5s ease;
+        .gold-gradient-btn {
+            background: linear-gradient(135deg, #FFE066 0%, #EAB308 50%, #CA8A04 100%);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        #portal-container.desativado {
-            display: none !important;
-            pointer-events: none !important;
+        .gold-gradient-btn:hover {
+            filter: brightness(1.1);
+            box-shadow: 0 0 25px rgba(234, 179, 8, 0.4);
         }
 
-        .portal-box {
-            width: 100%;
-            max-width: 400px;
-            display: flex;
-            flex-direction: column;
+        .green-gradient-btn {
+            background: linear-gradient(135deg, #34D399 0%, #10B981 50%, #059669 100%);
+            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .header { text-align: center; margin-bottom: 25px; border-bottom: 2px solid var(--cyan); padding-bottom: 15px; }
-        .header h1 { 
-             font-family: 'Orbitron', sans-serif;
-             color: var(--cyan); 
-             font-size: 16px; 
-             text-transform: uppercase; 
-             letter-spacing: 2px; 
-             margin: 0; 
-             text-shadow: 0 0 10px rgba(6, 182, 212, 0.4);
+        .green-gradient-btn:hover {
+            filter: brightness(1.1);
+            box-shadow: 0 0 30px rgba(16, 185, 129, 0.6);
         }
 
-        .input-container {
-            position: relative;
-            width: 100%;
-            margin-bottom: 15px;
-        }
-
-        .input-id {
-            width: 100%;
-            padding: 18px;
-            border-radius: 12px;
-            border: 2px solid #1e293b;
-            background: #000;
-            color: var(--gold);
-            text-transform: uppercase;
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 900;
-            font-size: 1.3rem;
-            text-align: center;
-            outline: none;
-            transition: all 0.3s;
-            letter-spacing: 2px;
-        }
-
-        .input-id:focus {
-            border-color: var(--cyan);
-            box-shadow: 0 0 15px rgba(6, 182, 212, 0.2);
-        }
-
-        .btn-rastrear {
-            width: 100%;
-            padding: 16px;
-            background: var(--jdp-gold-gradient);
-            border: none;
-            border-radius: 12px;
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 900;
-            cursor: pointer;
-            color: #000;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            box-shadow: 0 4px 15px rgba(191, 149, 63, 0.4);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        /* PAINEL DE STATUS EM TEMPO REAL */
-        .status-container {
-            margin-top: 20px;
-            background: var(--card);
-            border: 1px solid #1e293b;
-            border-radius: 12px;
-            padding: 20px;
-            display: none;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .status-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #1e293b;
-            padding-bottom: 10px;
-        }
-
-        .status-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 11px;
-            letter-spacing: 1px;
-            color: #64748b;
-        }
-
-        .status-badge-exibicao {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 11px;
-            font-weight: 900;
-            padding: 4px 10px;
-            border-radius: 6px;
-            text-transform: uppercase;
-        }
-
-        .status-mensagem {
-            font-size: 13px;
-            line-height: 1.5;
-            color: #cbd5e1;
-            text-align: center;
-            padding: 15px;
-            background: #020617;
-            border-radius: 8px;
-            border: 1px solid rgba(255,255,255,0.03);
-        }
-
-        .btn-mapa-direto {
-            width: 100%;
-            padding: 14px;
-            background: var(--green);
-            color: #000;
-            border: none;
-            border-radius: 8px;
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 900;
-            text-transform: uppercase;
-            cursor: pointer;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            box-shadow: 0 4px 10px rgba(34, 197, 150, 0.3);
-        }
-
-        /* --- ÁREA DO MAPA E HUD --- */
-        #map { 
-            width: 100vw; 
-            height: 100vh; 
+        /* MAPA E TELA DE MAPA ATIVO */
+        #map-container-wrapper {
             position: absolute;
             inset: 0;
+            z-index: 100;
+            display: none;
             background: #020617;
-            z-index: 1;
         }
-
-        .leaflet-tile {
-            filter: invert(90%) hue-rotate(180deg) brightness(0.9) contrast(1.1);
-        }
-
-        /* BOTÃO VOLTAR AO PAINEL NO MAPA */
-        #btn-voltar-painel {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            z-index: 3000;
-            background: rgba(2, 6, 23, 0.9);
-            border: 2px solid var(--cyan);
-            color: var(--cyan);
-            padding: 10px 16px;
-            border-radius: 10px;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 11px;
-            font-weight: bold;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
-        }
+        #map { width: 100%; height: 100%; }
+        .leaflet-tile { filter: invert(90%) hue-rotate(180deg) brightness(0.9) contrast(1.1); }
 
         /* ALERTA DE BUZINA */
         #alerta-buzina {
-            position: absolute;
+            position: fixed;
             top: 20px;
             left: 50%;
             transform: translateX(-50%) translateY(-100px);
             background: rgba(2, 6, 23, 0.95);
-            border: 2px solid var(--cyan);
-            box-shadow: 0 0 20px rgba(6, 182, 212, 0.6);
+            border: 2px solid #06b6d4;
+            box-shadow: 0 0 25px rgba(6, 182, 212, 0.6);
             padding: 15px 30px;
-            border-radius: 10px;
-            z-index: 3000;
+            border-radius: 12px;
+            z-index: 9999;
             display: flex;
             align-items: center;
             gap: 15px;
@@ -248,87 +124,192 @@
             transform: translateX(-50%) translateY(0);
             opacity: 1;
         }
-
-        /* TV DE MÍDIA / PUBLICIDADE */
-        #tv-midia { 
-            position: absolute; 
-            bottom: 20px; 
-            right: 20px; 
-            width: 300px; 
-            height: 200px; 
-            background: #000; 
-            border: 3px solid var(--gold); 
-            border-radius: 10px; 
-            z-index: 1000;
-            display: none; 
-            align-items: center; 
-            justify-content: center; 
-            overflow: hidden; 
-        }
-        #tv-midia .midia-content { width: 100%; height: 100%; object-fit: cover; }
-        
-        .modo-tv #map { display: none !important; }
-        .modo-tv #tv-midia { display: flex; width: 100%; height: 100%; bottom: 0; right: 0; border: none; border-radius: 0; z-index: 5000; }
-
-        .leaflet-popup-content-wrapper { background: #020617 !important; border: 2px solid var(--cyan) !important; color: #fff !important; border-radius: 8px !important; }
-        .leaflet-div-icon { background: transparent !important; border: none !important; }
     </style>
 </head>
-<body>
+<body class="flex justify-center items-center min-h-screen p-4 lg:p-8 text-gray-100">
 
-    <!-- BOTÃO DE RETORNO AO MENU QUANDO NO MAPA -->
-    <button id="btn-voltar-painel" onclick="voltarAoPortal()" style="display:none;">
-        <i class="fas fa-arrow-left"></i> STATUS DO PEDIDO
-    </button>
-
-    <!-- HUD DE BUZINA -->
+    <!-- ALERTA DE BUZINA DO MOTOBOY -->
     <div id="alerta-buzina">
-        <div style="font-size: 24px;">🔊</div>
+        <div style="font-size: 26px;">🔊</div>
         <div>
-            <h4 style="color: var(--gold); margin: 0; font-family: 'Orbitron'; font-size: 14px;">MOTOBOY CHEGANDO!</h4>
-            <span style="color: var(--cyan); font-size: 11px; font-weight: bold;">ELE BUZINOU NO PORTÃO</span>
+            <h4 style="color: #fde047; margin: 0; font-family: 'Orbitron', sans-serif; font-size: 14px; font-weight: 900;">MOTOBOY CHEGANDO!</h4>
+            <span style="color: #06b6d4; font-size: 11px; font-weight: bold;">ELE BUZINOU NO PORTÃO</span>
         </div>
     </div>
 
-    <!-- TELA DE PORTAL / STATUS E CONSULTA -->
-    <div id="portal-container">
-        <div class="portal-box">
-            <div class="header">
-                <h1>DONY BURGUER'S - RASTREIO 🛵</h1>
-            </div>
-                               
-            <div class="input-container">
-                <input type="text" id="input-id" class="input-id" placeholder="ID DO PEDIDO (JDP-)" maxlength="12">
-            </div>
-                               
-            <button id="btn-master" class="btn-rastrear" onclick="rastrearPedidoManual()">
-                <i class="fas fa-search"></i> CONSULTAR STATUS
-            </button>
+    <!-- CONTAINER PRINCIPAL MODO DESKTOP (2 COLUNAS) -->
+    <div id="desktop-app" class="w-full max-w-[1700px] grid grid-cols-1 lg:grid-cols-12 gap-8 items-start relative z-10">
 
-            <!-- PAINEL DE STATUS EM TEMPO REAL -->
-            <div class="status-container" id="painelStatus">
-                <div class="status-header">
-                    <span class="status-title" id="idDisplay">ID: #00000</span>
-                    <span class="status-badge-exibicao" id="badgeDisplay">STATUS</span>
+        <!-- COLUNA ESQUERDA: CONTROLE DE PEDIDO E STATUS (5 COLUNAS) -->
+        <div class="lg:col-span-5 flex flex-col gap-6">
+
+            <!-- 1. CABEÇALHO DA LOJA -->
+            <header class="glass-card rounded-3xl p-6 text-center relative overflow-hidden shadow-2xl border border-yellow-500/20">
+                <div class="absolute -top-16 -right-16 w-36 h-36 bg-yellow-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="absolute -bottom-16 -left-16 w-36 h-36 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                <div class="flex items-center justify-center gap-4">
+                    <div class="w-16 h-16 rounded-2xl bg-slate-900 border border-amber-500/40 flex items-center justify-center overflow-hidden shadow-gold-glow flex-shrink-0">
+                        <img src="https://raw.githubusercontent.com/pradodalapa-hue/fotos-industrial/main/img/jdp_1792844680366_1001574610.png" alt="Logo Dony Burguer's" class="w-full h-full object-cover">
+                    </div>
+                    <div class="text-left">
+                        <h1 class="text-2xl font-black tracking-wider bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-500 bg-clip-text text-transparent font-orbitron">
+                            DONY BURGUER'S
+                        </h1>
+                        <p class="text-xs text-emerald-400 font-bold tracking-widest uppercase flex items-center gap-1.5 mt-0.5">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping inline-block"></span>
+                            RASTREIO SUPREMO
+                        </p>
+                    </div>
                 </div>
-                <div class="status-mensagem" id="msgDisplay">
-                    Processando dados de telemetria...
+            </header>
+
+            <!-- 2. CAIXA DE BUSCA E CONSULTA DE PEDIDO -->
+            <section class="glass-card rounded-3xl p-6 shadow-xl border border-white/5">
+                <label for="inputPedido" class="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-3 pl-1 font-orbitron">
+                    LOCALIZAR SEU PEDIDO
+                </label>
+                <div class="relative flex items-center mb-4">
+                    <input type="text" id="inputPedido" value="" 
+                        placeholder="EX: #JDP-W22261" 
+                        class="w-full bg-slate-900/90 text-yellow-300 font-mono font-bold text-lg px-5 py-4 rounded-2xl border border-amber-500/30 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/20 transition-all uppercase placeholder-gray-600 shadow-inner">
+                    <button onclick="limparInput()" class="absolute right-4 text-gray-500 hover:text-gray-300 p-1">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
                 </div>
-                <button class="btn-mapa-direto" id="btnMapa" onclick="entrarNoMapa()">
-                    <i class="fas fa-map-marked-alt"></i> ABRIR MAPA EM TEMPO REAL
+
+                <button onclick="rastrearPedidoManual()" class="gold-gradient-btn w-full py-4 rounded-2xl text-slate-950 font-black text-base tracking-wide flex items-center justify-center gap-3 shadow-gold-glow uppercase font-orbitron">
+                    <i class="fas fa-search"></i> CONSULTAR STATUS
                 </button>
-            </div>
+
+                <!-- Recentes -->
+                <div id="containerRecentes" class="mt-4 flex items-center gap-2 overflow-x-auto text-xs pb-1">
+                    <span class="text-gray-500 font-semibold">Recentes:</span>
+                </div>
+            </section>
+
+            <!-- 3. BOTÃO DO MAPA EM TEMPO REAL + DETALHES -->
+            <section class="glass-card rounded-3xl p-6 shadow-2xl border border-emerald-500/20 flex flex-col gap-6">
+                
+                <button id="btnMapa" onclick="abrirMapaModoTela()" class="green-gradient-btn w-full py-5 rounded-2xl text-slate-950 font-black text-base tracking-wider flex items-center justify-center gap-3 uppercase shadow-green-glow font-orbitron" style="display: none;">
+                    <i class="fas fa-map-marked-alt text-xl"></i> ABRIR MAPA EM TEMPO REAL
+                </button>
+
+                <!-- DETALHES DO PEDIDO -->
+                <div class="flex flex-col gap-3.5 text-sm bg-slate-950/60 p-5 rounded-2xl border border-white/5">
+                    <div class="flex justify-between items-center border-b border-gray-800/80 pb-3">
+                        <span class="text-gray-400 font-medium">Status do Sistema:</span>
+                        <span id="txtStatusDetalhe" class="font-bold text-yellow-400 font-orbitron text-xs">AGUARDANDO CONSULTA</span>
+                    </div>
+                    <div class="flex justify-between items-center border-b border-gray-800/80 pb-3">
+                        <span class="text-gray-400 font-medium">Loja Conectada:</span>
+                        <span class="font-bold text-gray-100">Dony Burguer's - Manaus/AM</span>
+                    </div>
+                    <div class="flex justify-between items-center pt-1">
+                        <span class="text-gray-400 font-medium">Suporte Oficial:</span>
+                        <span class="font-extrabold text-emerald-400">Atendimento 24h</span>
+                    </div>
+                </div>
+
+            </section>
+
         </div>
+
+        <!-- COLUNA DIREITA: CARD DE STATUS & TELÃO DE PUBLICIDADE (7 COLUNAS) -->
+        <div class="lg:col-span-7 flex flex-col gap-6">
+
+            <main id="cardStatus" class="glass-card rounded-3xl p-8 shadow-2xl border border-emerald-500/25 relative overflow-hidden flex flex-col justify-between min-h-[620px]">
+                
+                <div>
+                    <!-- BADGE DE STATUS SUPERIOR -->
+                    <div class="flex items-center justify-between mb-8">
+                        <div>
+                            <span class="text-xs text-gray-400 font-bold uppercase tracking-wider block font-orbitron">Código Ativo</span>
+                            <span id="idDisplay" class="text-2xl font-black text-white font-mono tracking-wider">#AGUARDANDO</span>
+                        </div>
+                        <div id="badgeDisplay" class="px-5 py-2 rounded-full bg-slate-800 border border-slate-700 text-gray-400 font-extrabold text-sm tracking-widest uppercase flex items-center gap-2 font-orbitron">
+                            <span class="w-3 h-3 rounded-full bg-gray-500 animate-pulse"></span>
+                            INATIVO
+                        </div>
+                    </div>
+
+                    <!-- STEPPER / LINHA DO TEMPO -->
+                    <div class="mb-8 px-2">
+                        <div class="relative flex items-center justify-between">
+                            <div class="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1.5 bg-gray-800 z-0"></div>
+                            <div id="barraProgresso" class="absolute left-0 top-1/2 -translate-y-1/2 h-1.5 bg-gradient-to-r from-yellow-500 via-emerald-400 to-emerald-500 z-0 transition-all duration-700" style="width: 0%;"></div>
+
+                            <!-- Step 1 -->
+                            <div class="relative z-10 flex flex-col items-center">
+                                <div id="step1" class="w-10 h-10 rounded-full bg-gray-800 text-gray-500 font-black text-sm flex items-center justify-center ring-4 ring-slate-900 shadow-md">1</div>
+                                <span class="text-xs text-gray-400 font-bold mt-2">Cozinha</span>
+                            </div>
+                            <!-- Step 2 -->
+                            <div class="relative z-10 flex flex-col items-center">
+                                <div id="step2" class="w-10 h-10 rounded-full bg-gray-800 text-gray-500 font-black text-sm flex items-center justify-center ring-4 ring-slate-900 shadow-md">2</div>
+                                <span class="text-xs text-gray-400 font-bold mt-2">Pronto</span>
+                            </div>
+                            <!-- Step 3 -->
+                            <div class="relative z-10 flex flex-col items-center">
+                                <div id="step3" class="w-12 h-12 rounded-full bg-gray-800 text-gray-400 font-black text-lg flex items-center justify-center ring-4 ring-slate-900">🛵</div>
+                                <span class="text-xs text-gray-400 font-extrabold mt-2">A Caminho</span>
+                            </div>
+                            <!-- Step 4 -->
+                            <div class="relative z-10 flex flex-col items-center">
+                                <div id="step4" class="w-10 h-10 rounded-full bg-gray-800 text-gray-500 font-bold text-sm flex items-center justify-center ring-4 ring-slate-900 border border-gray-700">4</div>
+                                <span class="text-xs text-gray-500 font-medium mt-2">Entregue</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TELÃO DE EXIBIÇÃO: MENSAGEM DE STATUS OU PUBLICIDADE (PRADO_67 / PRADO_68) -->
+                <div id="quadradoDisplay" class="bg-slate-950/90 rounded-3xl p-6 border border-white/10 text-center relative overflow-hidden min-h-[300px] flex flex-col items-center justify-center shadow-inner my-auto">
+                    
+                    <!-- CONTEÚDO DE STATUS DINÂMICO -->
+                    <div id="msgDisplay" class="flex flex-col items-center justify-center w-full">
+                        <div class="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-cyan-500/10 text-cyan-400 mb-4 border border-cyan-500/30 shadow-lg">
+                            <i class="fas fa-search-dollar text-3xl"></i>
+                        </div>
+                        <h3 class="text-white font-black text-xl tracking-wide uppercase mb-2 font-orbitron">
+                            INSIRA O ID DO SEU PEDIDO
+                        </h3>
+                        <p class="text-sm text-gray-400 leading-relaxed max-w-md mx-auto">
+                            Digite o código do seu pedido (Ex: #JDP-W22261) ao lado para rastrear a entrega em tempo real.
+                        </p>
+                    </div>
+
+                    <!-- CONTAINER DE MÍDIA DE PUBLICIDADE (TV) -->
+                    <div id="containerPublicidade" class="hidden w-full h-full absolute inset-0 flex items-center justify-center bg-slate-950">
+                        <div id="midiaHolder" class="w-full h-full flex items-center justify-center"></div>
+                    </div>
+
+                </div>
+
+                <!-- RODAPÉ -->
+                <footer class="text-center pt-4 border-t border-gray-800/80 flex items-center justify-between text-xs text-gray-500">
+                    <a href="https://wa.me/5592984000000?text=Olá,%20preciso%20de%20ajuda%20com%20meu%20pedido" target="_blank" 
+                       class="inline-flex items-center gap-2 hover:text-emerald-400 transition bg-slate-900/90 px-4 py-2 rounded-xl border border-white/5 font-semibold">
+                        <i class="fab fa-whatsapp text-emerald-400 text-base"></i> Atendimento WhatsApp Supreme
+                    </a>
+                    <p class="font-medium">Dony Burguer's Systems © 2026 • Modo Desktop Supreme</p>
+                </footer>
+
+            </main>
+
+        </div>
+
     </div>
 
-    <!-- ÁREA DO MAPA -->
-    <div id="map"></div>
-
-    <!-- TV DE PUBLICIDADE -->
-    <div id="tv-midia">
-        <div id="display-area"></div>
+    <!-- TELA DE MAPA EM TELA CHEIA (QUANDO CLICADO EM "ABRIR MAPA") -->
+    <div id="map-container-wrapper">
+        <button onclick="fecharMapaModoTela()" class="absolute top-6 left-6 z-[9999] bg-slate-950/90 border-2 border-cyan-400 text-cyan-400 px-5 py-3 rounded-xl font-orbitron text-xs font-bold flex items-center gap-3 shadow-lg hover:bg-slate-900 transition">
+            <i class="fas fa-arrow-left"></i> VOLTAR AO PAINEL DE STATUS
+        </button>
+        <div id="map"></div>
     </div>
 
+    <!-- JAVASCRIPT DE TELEMETRIA, MÁQUINA DE ESTADOS E PUBLICIDADE -->
     <script>
         const firebaseConfig = { databaseURL: "https://dony-burguers-default-rtdb.firebaseio.com" };
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
@@ -343,73 +324,73 @@
 
         let map = null, markerMotoboy = null;
         let mapaInicializado = false;
+
         let adsCache = [];
         let adIndex = 0;
+        let timerCarrossel = null;
 
         const AUDIO_BUZINA_URL = "https://raw.githubusercontent.com/pradodalapa-hue/fotos-industrial/main/media/jdp_1781371308253_Buzina_marca_BZM_para_Motos_1_tom_MP3_160K_.mp3"; 
         const audioBuzinaElement = new Audio(AUDIO_BUZINA_URL);
 
-        function inicializarMapaEngine() {
-            if (mapaInicializado) return;
-            mapaInicializado = true;
-
-            map = L.map('map', { zoomControl: true, attributionControl: false }).setView([-2.9903, -60.0673], 15);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-
-            // Ouvinte da Telemetria Reativa do Motoboy (Atualiza o pino do motoboy e foca nele em tempo real)
-            db.ref(`lojas/${LOJA_ID}/motoboy_status`).on('value', snap => {
-                const pos = snap.val();
-                if (pos && pos.online) {
-                    const bearing = pos.bearing || 0;
-                    const imgDireita = "https://raw.githubusercontent.com/pradodalapa-hue/fotos-industrial/main/img/jdp_1781366116603_1001229381.png";
-                    const imgEsquerda = "https://raw.githubusercontent.com/pradodalapa-hue/fotos-industrial/main/img/jdp_1781368263004_Engenheiro_Transparente.png";
-                    let imgAtiva = bearing > 180 && bearing <= 360 ? imgEsquerda : imgDireita;
-                    const iconHtml = `<img src="${imgAtiva}" style="width: 38px; height: 38px; filter: drop-shadow(0 0 5px rgba(6,182,212,0.95)); display: block; background: transparent;">`;
-                    
-                    if (!markerMotoboy) {
-                        markerMotoboy = L.marker([pos.latitude, pos.longitude], {
-                            icon: L.divIcon({ html: iconHtml, iconSize: [38, 38], iconAnchor: [19, 19] })
-                        }).addTo(map);
-                    } else {
-                        markerMotoboy.setLatLng([pos.latitude, pos.longitude]);
-                        markerMotoboy.setIcon(L.divIcon({ html: iconHtml, iconSize: [38, 38], iconAnchor: [19, 19] }));
-                    }
-                    // Centraliza a câmera perfeitamente na posição dinâmica do motoboy
-                    map.panTo([pos.latitude, pos.longitude]);
-                }
-            });
-
-            // Ouvinte de Buzina
-            let ultimoBuzinar = null;
-            db.ref(`lojas/${LOJA_ID}/motoboy_status/buzina_trigger`).on('value', snap => {
-                const val = snap.val();
-                if (val && val !== ultimoBuzinar) {
-                    ultimoBuzinar = val;
-                    audioBuzinaElement.play().catch(() => {});
-                    const alerta = document.getElementById('alerta-buzina');
-                    alerta.classList.add('active');
-                    setTimeout(() => alerta.classList.remove('active'), 4000);
-                }
-            });
-        }
-
         if (idPedidoBuscado) {
-            document.getElementById('input-id').value = idPedidoBuscado;
+            document.getElementById('inputPedido').value = idPedidoBuscado;
             iniciarEscutaFirebase(idPedidoBuscado);
         }
 
         function rastrearPedidoManual() {
-            const input = document.getElementById('input-id');
-            const id = input.value.trim().toUpperCase();
-            if (!id) return alert("Digite o ID do seu pedido.");
-
-            idPedidoBuscado = id;
-            window.history.replaceState({}, '', `?pedido=${id}`);
-            iniciarEscutaFirebase(id);
+            const input = document.getElementById('inputPedido');
+            let id = input.value.trim().toUpperCase();
+            if (!id) {
+                alert("Por favor, digite o código do seu pedido!");
+                return;
+            }
+            if (!id.startsWith('#')) id = '#' + id;
+            idPedidoBuscado = id.replace('#', '');
+            window.history.replaceState({}, '', `?pedido=${idPedidoBuscado}`);
+            iniciarEscutaFirebase(idPedidoBuscado);
         }
 
+        function limparInput() {
+            document.getElementById('inputPedido').value = '';
+            document.getElementById('inputPedido').focus();
+        }
+
+        function carregarPedido(idClean) {
+            document.getElementById('inputPedido').value = idClean;
+            idPedidoBuscado = idClean.replace('#', '');
+            window.history.replaceState({}, '', `?pedido=${idPedidoBuscado}`);
+            iniciarEscutaFirebase(idPedidoBuscado);
+        }
+
+        function salvarRecente(idClean) {
+            let recentes = JSON.parse(localStorage.getItem('recentes_dony') || '[]');
+            if (!recentes.includes(idClean)) {
+                recentes.unshift(idClean);
+                if (recentes.length > 3) recentes.pop();
+                localStorage.setItem('recentes_dony', JSON.stringify(recentes));
+                renderizarRecentes();
+            }
+        }
+
+        function renderizarRecentes() {
+            let recentes = JSON.parse(localStorage.getItem('recentes_dony') || '[]');
+            const container = document.getElementById('containerRecentes');
+            let html = '<span class="text-gray-500 font-semibold">Recentes:</span>';
+            if (recentes.length === 0) {
+                container.innerHTML = html + '<span class="text-gray-600 text-[11px] ml-1">Nenhum</span>';
+                return;
+            }
+            recentes.forEach(item => {
+                html += `<button onclick="carregarPedido('${item}')" class="bg-slate-800/90 hover:bg-slate-700 text-yellow-400 px-3 py-1.5 rounded-xl border border-yellow-500/20 transition font-mono">${item}</button>`;
+            });
+            container.innerHTML = html;
+        }
+        renderizarRecentes();
+
+        // --- ESCUTA FIREBASE ---
         function iniciarEscutaFirebase(id) {
             destruirListenersAnteriores();
+            salvarRecente('#' + id);
 
             refPendente = db.ref(`lojas/${LOJA_ID}/producao_pendente/${id}`);
             refRastreio = db.ref(`lojas/${LOJA_ID}/rastreio_ativo/${id}`);
@@ -427,11 +408,9 @@
             dadosPendente = null; dadosRastreio = null; dadosConcluido = null;
         }
 
-        // --- MÁQUINA DE ESTADOS SOBERANA ---
+        // --- MÁQUINA DE ESTADOS ---
         function processarFusaoDeEstados() {
-            const painel = document.getElementById('painelStatus');
-            painel.style.display = "flex";
-            document.getElementById('idDisplay').innerText = `ID: #${idPedidoBuscado}`;
+            document.getElementById('idDisplay').innerText = `#${idPedidoBuscado}`;
 
             if (dadosRastreio && (dadosRastreio.na_pista === true || dadosRastreio.status === "em_rota")) {
                 exibirEstadoEmRota();
@@ -453,110 +432,209 @@
                 exibirEstadoAguardandoPagamento();
                 return;
             }
-
             exibirEstadoInexistente();
         }
 
+        function atualizarStepper(progresso, s1, s2, s3, s4) {
+            document.getElementById('barraProgresso').style.width = progresso + '%';
+            document.getElementById('step1').className = `w-10 h-10 rounded-full font-black text-sm flex items-center justify-center ring-4 ring-slate-900 ${s1}`;
+            document.getElementById('step2').className = `w-10 h-10 rounded-full font-black text-sm flex items-center justify-center ring-4 ring-slate-900 ${s2}`;
+            document.getElementById('step3').className = `w-12 h-12 rounded-full font-black text-lg flex items-center justify-center ring-4 ring-slate-900 ${s3}`;
+            document.getElementById('step4').className = `w-10 h-10 rounded-full font-bold text-sm flex items-center justify-center ring-4 ring-slate-900 ${s4}`;
+        }
+
         function exibirEstadoPedidoAceito() {
-            document.getElementById('badgeDisplay').innerText = "ACEITO NA COZINHA";
-            document.getElementById('badgeDisplay').style.background = "var(--gold)";
-            document.getElementById('badgeDisplay').style.color = "#000";
-            document.getElementById('msgDisplay').innerHTML = `<i class="fas fa-receipt" style="color:var(--gold); font-size: 22px; margin-bottom: 10px; display:block;"></i>PEDIDO ACEITO NA COZINHA!<br>Seu pedido está na esteira de preparação.`;
+            document.getElementById('badgeDisplay').innerHTML = '<span class="w-3 h-3 rounded-full bg-yellow-400 animate-pulse"></span> COZINHA';
+            document.getElementById('badgeDisplay').className = "px-5 py-2 rounded-full bg-yellow-500/10 border border-yellow-500/40 text-yellow-400 font-extrabold text-sm tracking-widest uppercase flex items-center gap-2 font-orbitron shadow-gold-glow";
+            document.getElementById('txtStatusDetalhe').innerText = "EM PREPARAÇÃO NA COZINHA";
+            document.getElementById('msgDisplay').innerHTML = `
+                <div class="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-yellow-500/10 text-yellow-400 mb-4 border border-yellow-500/30 shadow-lg">
+                    <i class="fas fa-fire text-3xl"></i>
+                </div>
+                <h3 class="text-white font-black text-xl tracking-wide uppercase mb-2 font-orbitron">PEDIDO NA COZINHA</h3>
+                <p class="text-sm text-gray-400 leading-relaxed max-w-md mx-auto">Seu pedido foi aceito e já está sendo preparado com todo capricho!</p>
+            `;
             document.getElementById('btnMapa').style.display = "none";
+            atualizarStepper(25, 'bg-yellow-500 text-slate-950 shadow-md', 'bg-gray-800 text-gray-500', 'bg-gray-800 text-gray-400', 'bg-gray-800 text-gray-500');
         }
 
         function exibirEstadoPronto() {
-            document.getElementById('badgeDisplay').innerText = "PRONTO";
-            document.getElementById('badgeDisplay').style.background = "var(--cyan)";
-            document.getElementById('badgeDisplay').style.color = "#000";
-            document.getElementById('msgDisplay').innerHTML = `<i class="fas fa-hamburger" style="color:var(--cyan); font-size: 22px; margin-bottom: 10px; display:block;"></i>SEU PEDIDO ESTÁ PRONTO!<br>Aguardando o motoboy iniciar a rota.`;
+            document.getElementById('badgeDisplay').innerHTML = '<span class="w-3 h-3 rounded-full bg-cyan-400 animate-pulse"></span> PRONTO';
+            document.getElementById('badgeDisplay').className = "px-5 py-2 rounded-full bg-cyan-500/10 border border-cyan-500/40 text-cyan-400 font-extrabold text-sm tracking-widest uppercase flex items-center gap-2 font-orbitron";
+            document.getElementById('txtStatusDetalhe').innerText = "PRONTO PARA DESPACHO";
+            document.getElementById('msgDisplay').innerHTML = `
+                <div class="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-cyan-500/10 text-cyan-400 mb-4 border border-cyan-500/30 shadow-lg">
+                    <i class="fas fa-hamburger text-3xl"></i>
+                </div>
+                <h3 class="text-white font-black text-xl tracking-wide uppercase mb-2 font-orbitron">PEDIDO PRONTO!</h3>
+                <p class="text-sm text-gray-400 leading-relaxed max-w-md mx-auto">Tudo pronto! Aguardando o motoboy iniciar a rota.</p>
+            `;
             document.getElementById('btnMapa').style.display = "none";
+            atualizarStepper(60, 'bg-yellow-500 text-slate-950 shadow-md', 'bg-yellow-500 text-slate-950 shadow-md', 'bg-gray-800 text-gray-400', 'bg-gray-800 text-gray-500');
         }
 
         function exibirEstadoEmRota() {
-            document.getElementById('badgeDisplay').innerText = "A CAMINHO";
-            document.getElementById('badgeDisplay').style.background = "var(--green)";
-            document.getElementById('badgeDisplay').style.color = "#000";
-            document.getElementById('msgDisplay').innerHTML = `<i class="fas fa-motorcycle" style="color:var(--green); font-size: 22px; margin-bottom: 10px; display:block;"></i>A CAMINHO!<br>Seu pedido foi despachado. Clique abaixo para abrir o mapa em tempo real!`;
-            
-            const btnMapa = document.getElementById('btnMapa');
-            btnMapa.style.display = "flex";
-            
-            entrarNoMapa();
+            document.getElementById('badgeDisplay').innerHTML = '<span class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></span> A CAMINHO';
+            document.getElementById('badgeDisplay').className = "px-5 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/40 text-emerald-400 font-extrabold text-sm tracking-widest uppercase flex items-center gap-2 font-orbitron shadow-green-glow";
+            document.getElementById('txtStatusDetalhe').innerText = "EM ROTA DE ENTREGA";
+            document.getElementById('msgDisplay').innerHTML = `
+                <div class="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-emerald-500/10 text-emerald-400 mb-4 border border-emerald-500/30 shadow-lg animate-bounce">
+                    <i class="fas fa-motorcycle text-3xl"></i>
+                </div>
+                <h3 class="text-white font-black text-xl tracking-wide uppercase mb-2 font-orbitron">PEDIDO A CAMINHO!</h3>
+                <p class="text-sm text-gray-400 leading-relaxed max-w-md mx-auto">O entregador está a caminho. Clique no botão verde abaixo para abrir o mapa em tempo real.</p>
+            `;
+            document.getElementById('btnMapa').style.display = "flex";
+            atualizarStepper(85, 'bg-yellow-500 text-slate-950 shadow-md', 'bg-yellow-500 text-slate-950 shadow-md', 'bg-emerald-500 text-slate-950 shadow-green-glow animate-pulse', 'bg-gray-800 text-gray-500');
         }
 
         function exibirEstadoConcluido() {
-            document.getElementById('badgeDisplay').innerText = "ENTREGUE";
-            document.getElementById('badgeDisplay').style.background = "#1e293b";
-            document.getElementById('badgeDisplay').style.color = "#94a3b8";
-            document.getElementById('msgDisplay').innerHTML = `<i class="fas fa-check-circle" style="color:var(--green); font-size: 22px; margin-bottom: 10px; display:block;"></i>ENTREGA CONCLUÍDA!<br>Obrigado pela preferência.`;
+            document.getElementById('badgeDisplay').innerHTML = '<span class="w-3 h-3 rounded-full bg-gray-500"></span> ENTREGUE';
+            document.getElementById('badgeDisplay').className = "px-5 py-2 rounded-full bg-slate-800 border border-slate-700 text-gray-400 font-extrabold text-sm tracking-widest uppercase flex items-center gap-2 font-orbitron";
+            document.getElementById('txtStatusDetalhe').innerText = "PEDIDO CONCLUÍDO";
+            document.getElementById('msgDisplay').innerHTML = `
+                <div class="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-emerald-500/10 text-emerald-400 mb-4 border border-emerald-500/30 shadow-lg">
+                    <i class="fas fa-check-circle text-3xl"></i>
+                </div>
+                <h3 class="text-white font-black text-xl tracking-wide uppercase mb-2 font-orbitron">ENTREGA CONCLUÍDA!</h3>
+                <p class="text-sm text-gray-400 leading-relaxed max-w-md mx-auto">Obrigado pela preferência na Dony Burguer's! Bom apetite.</p>
+            `;
             document.getElementById('btnMapa').style.display = "none";
+            atualizarStepper(100, 'bg-yellow-500 text-slate-950', 'bg-yellow-500 text-slate-950', 'bg-emerald-500 text-slate-950', 'bg-emerald-500 text-slate-950');
         }
 
         function exibirEstadoAguardandoPagamento() {
-            document.getElementById('badgeDisplay').innerText = "AGUARDANDO PAGAMENTO";
-            document.getElementById('badgeDisplay').style.background = "var(--red)";
-            document.getElementById('badgeDisplay').style.color = "#fff";
-            document.getElementById('msgDisplay').innerHTML = `<i class="fas fa-wallet" style="color:var(--red); font-size: 22px; margin-bottom: 10px; display:block;"></i>AGUARDANDO PAGAMENTO...`;
+            document.getElementById('badgeDisplay').innerHTML = '<span class="w-3 h-3 rounded-full bg-red-500 animate-pulse"></span> PAGAMENTO';
+            document.getElementById('badgeDisplay').className = "px-5 py-2 rounded-full bg-red-500/10 border border-red-500/40 text-red-400 font-extrabold text-sm tracking-widest uppercase flex items-center gap-2 font-orbitron";
+            document.getElementById('txtStatusDetalhe').innerText = "AGUARDANDO PAGAMENTO";
+            document.getElementById('msgDisplay').innerHTML = `
+                <div class="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-red-500/10 text-red-400 mb-4 border border-red-500/30 shadow-lg">
+                    <i class="fas fa-wallet text-3xl"></i>
+                </div>
+                <h3 class="text-white font-black text-xl tracking-wide uppercase mb-2 font-orbitron">AGUARDANDO PAGAMENTO</h3>
+                <p class="text-sm text-gray-400 leading-relaxed max-w-md mx-auto">Efetue o pagamento para liberar o pedido na linha de produção.</p>
+            `;
             document.getElementById('btnMapa').style.display = "none";
         }
 
         function exibirEstadoInexistente() {
-            document.getElementById('badgeDisplay').innerText = "NÃO ENCONTRADO";
-            document.getElementById('badgeDisplay').style.background = "var(--red)";
-            document.getElementById('badgeDisplay').style.color = "#fff";
-            document.getElementById('msgDisplay').innerHTML = `<i class="fas fa-exclamation-triangle" style="color:var(--red); font-size: 22px; margin-bottom: 10px; display:block;"></i>ID INVÁLIDO OU EXPIRADO.`;
+            document.getElementById('badgeDisplay').innerHTML = '<span class="w-3 h-3 rounded-full bg-red-500"></span> NÃO ENCONTRADO';
+            document.getElementById('badgeDisplay').className = "px-5 py-2 rounded-full bg-red-500/10 border border-red-500/40 text-red-400 font-extrabold text-sm tracking-widest uppercase flex items-center gap-2 font-orbitron";
+            document.getElementById('txtStatusDetalhe').innerText = "PEDIDO NÃO LOCALIZADO";
+            document.getElementById('msgDisplay').innerHTML = `
+                <div class="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-red-500/10 text-red-400 mb-4 border border-red-500/30 shadow-lg">
+                    <i class="fas fa-exclamation-triangle text-3xl"></i>
+                </div>
+                <h3 class="text-white font-black text-xl tracking-wide uppercase mb-2 font-orbitron">PEDIDO NÃO ENCONTRADO</h3>
+                <p class="text-sm text-gray-400 leading-relaxed max-w-md mx-auto">Verifique o número do ID digitado e tente novamente.</p>
+            `;
             document.getElementById('btnMapa').style.display = "none";
         }
 
-        // --- ENTRAR NO MAPA ---
-        function entrarNoMapa() {
-            document.getElementById('portal-container').classList.add('desativado');
-            document.getElementById('btn-voltar-painel').style.display = "flex";
-            document.body.classList.remove('modo-tv');
+        // --- MAPA LEAFLET E TELEMETRIA ---
+        function inicializarMapaEngine() {
+            if (mapaInicializado) return;
+            mapaInicializado = true;
 
-            inicializarMapaEngine();
+            map = L.map('map', { zoomControl: true, attributionControl: false }).setView([-2.9903, -60.0673], 15);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-            setTimeout(() => {
-                if (map) {
-                    map.invalidateSize();
+            db.ref(`lojas/${LOJA_ID}/motoboy_status`).on('value', snap => {
+                const pos = snap.val();
+                if (pos && pos.online) {
+                    const bearing = pos.bearing || 0;
+                    const imgDireita = "https://raw.githubusercontent.com/pradodalapa-hue/fotos-industrial/main/img/jdp_1781366116603_1001229381.png";
+                    const imgEsquerda = "https://raw.githubusercontent.com/pradodalapa-hue/fotos-industrial/main/img/jdp_1781368263004_Engenheiro_Transparente.png";
+                    let imgAtiva = bearing > 180 && bearing <= 360 ? imgEsquerda : imgDireita;
+                    const iconHtml = `<img src="${imgAtiva}" style="width: 42px; height: 42px; filter: drop-shadow(0 0 8px rgba(6,182,212,0.95)); display: block;">`;
+                    
+                    if (!markerMotoboy) {
+                        markerMotoboy = L.marker([pos.latitude, pos.longitude], {
+                            icon: L.divIcon({ html: iconHtml, iconSize: [42, 42], iconAnchor: [21, 21] })
+                        }).addTo(map);
+                    } else {
+                        markerMotoboy.setLatLng([pos.latitude, pos.longitude]);
+                        markerMotoboy.setIcon(L.divIcon({ html: iconHtml, iconSize: [42, 42], iconAnchor: [21, 21] }));
+                    }
+                    map.panTo([pos.latitude, pos.longitude]);
                 }
-            }, 100);
-        }
-
-        function voltarAoPortal() {
-            document.getElementById('portal-container').classList.remove('desativado');
-            document.getElementById('btn-voltar-painel').style.display = "none";
-        }
-
-        function motorPublicidade() {
-            db.ref(`publicidade/prado_67`).on('value', snap => {
-                if(snap.exists()) adsCache = Object.values(snap.val());
             });
 
-            setInterval(() => {
-                const displayArea = document.getElementById('display-area');
-                const ocioso = !document.getElementById('portal-container').classList.contains('desativado');
-                
-                document.body.classList.toggle('modo-tv', ocioso && adsCache.length > 0);
+            let ultimoBuzinar = null;
+            db.ref(`lojas/${LOJA_ID}/motoboy_status/buzina_trigger`).on('value', snap => {
+                const val = snap.val();
+                if (val && val !== ultimoBuzinar) {
+                    ultimoBuzinar = val;
+                    audioBuzinaElement.play().catch(() => {});
+                    const alerta = document.getElementById('alerta-buzina');
+                    alerta.classList.add('active');
+                    setTimeout(() => alerta.classList.remove('active'), 4000);
+                }
+            });
+        }
 
-                if (adsCache.length > 0 && ocioso) {
+        function abrirMapaModoTela() {
+            document.getElementById('map-container-wrapper').style.display = "block";
+            inicializarMapaEngine();
+            setTimeout(() => { if (map) map.invalidateSize(); }, 150);
+        }
+
+        function fecharMapaModoTela() {
+            document.getElementById('map-container-wrapper').style.display = "none";
+        }
+
+        // --- MOTOR DE PUBLICIDADE REALTIME (PRADO_67 / PRADO_68) ---
+        function motorPublicidade() {
+            db.ref('publicidade/prado_68').on('value', snap => {
+                adsCache = [];
+                if (snap.exists()) {
+                    snap.forEach(item => adsCache.push(item.val()));
+                }
+                if (adsCache.length === 0) {
+                    db.ref('publicidade/prado_67').once('value', s2 => {
+                        if (s2.exists()) s2.forEach(i => adsCache.push(i.val()));
+                    });
+                }
+            });
+
+            if (timerCarrossel) clearInterval(timerCarrossel);
+            timerCarrossel = setInterval(() => {
+                const elPadrao = document.getElementById('msgDisplay');
+                const elPub = document.getElementById('containerPublicidade');
+                const holder = document.getElementById('midiaHolder');
+                
+                // Se o usuário digitou um ID e está vendo o status, não injeta publicidade para não atrapalhar
+                const idInput = document.getElementById('inputPedido').value.trim();
+                if (idInput && adsCache.length > 0 && !dadosRastreio?.na_pista) {
+                    // Mantém estado ativo do pedido
+                    return;
+                }
+
+                if (adsCache.length > 0) {
+                    elPub.classList.remove('hidden');
                     adIndex = (adIndex + 1) % adsCache.length;
                     const url = adsCache[adIndex];
-                    displayArea.style.opacity = 0;
+                    const isVideo = url.match(/\.(mp4|webm|ogg|mov)$/i) || url.includes("data:video");
+
+                    holder.style.opacity = '0';
                     setTimeout(() => {
-                        displayArea.innerHTML = url.match(/\.(mp4|webm|ogg)$/i) ? 
-                            `<video class="midia-content" autoplay muted loop src="${url}"></video>` : 
-                            `<img class="midia-content" src="${url}">`;
-                        displayArea.style.opacity = 1;
-                    }, 500);
+                        if (isVideo) {
+                            holder.innerHTML = `<video src="${url}" autoplay loop muted playsinline class="w-full h-full object-contain bg-black"></video>`;
+                        } else {
+                            holder.innerHTML = `<img src="${url}" alt="Publicidade Dony" class="w-full h-full object-contain bg-black" onerror="this.src='https://via.placeholder.com/1200x600/020617/06b6d4?text=DONY+BURGUERS'">`;
+                        }
+                        holder.style.transition = 'opacity 0.5s ease-in-out';
+                        holder.style.opacity = '1';
+                    }, 250);
+                } else {
+                    elPub.classList.add('hidden');
                 }
-            }, 10000);
+            }, 8000);
         }
 
         motorPublicidade();
 
-        document.getElementById('input-id').addEventListener('keypress', (e) => {
+        document.getElementById('inputPedido').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') rastrearPedidoManual();
         });
     </script>

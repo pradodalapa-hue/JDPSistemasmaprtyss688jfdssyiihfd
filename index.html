@@ -2,7 +2,7 @@
 <html lang="pt-BR" class="dark">
 <head>
     <meta charset="UTF-8">
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <!-- TAGS CRÍTICAS PARA O WHATSAPP MOSTRAR A FOTO -->
     <meta property="og:title" content="ACOMPANHE SEU PEDIDO!">
     <meta property="og:description" content="Assista filme videos musica acompanhando a entrega do seu pedido.">
@@ -96,7 +96,7 @@
             box-shadow: 0 0 30px rgba(16, 185, 129, 0.6);
         }
 
-        /* ANIMAÇÕES SUPREMAS DE STEPPER E RADAR */
+        /* ANIMAÇÕES SUPREMAS DE STEPPER E RADAR NOTURNO */
         @keyframes sacudirLado {
             0% { transform: translateX(0); }
             20% { transform: translateX(-4px) rotate(-3deg); }
@@ -113,27 +113,21 @@
         }
 
         @keyframes radarOndas {
-            0% {
-                transform: scale(0.5);
-                opacity: 1.0;
-            }
-            100% {
-                transform: scale(3.2);
-                opacity: 0;
-            }
+            0% { transform: scale(0.3); opacity: 1.0; }
+            100% { transform: scale(4.0); opacity: 0; }
         }
 
         .radar-pulse-ring {
             position: absolute;
             top: 50%;
             left: 50%;
-            width: 90px;
-            height: 90px;
-            margin-left: -45px;
-            margin-top: -45px;
+            width: 120px;
+            height: 120px;
+            margin-left: -60px;
+            margin-top: -60px;
             border-radius: 50%;
-            border: 3px solid #34d399;
-            background: rgba(52, 211, 153, 0.15);
+            border: 3px solid #facc15;
+            background: rgba(250, 204, 21, 0.15);
             animation: radarOndas 2.2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
             pointer-events: none;
             z-index: 1000;
@@ -177,7 +171,7 @@
         .animar-procurando  { animation: vaiVemFaseProcurando 6s ease-in-out infinite alternate; }
         .animar-rota        { animation: vaiVemFaseRota 6s ease-in-out infinite alternate; }
 
-        /* MAPA DENTRO DO TELÃO */
+        /* MAPA DENTRO DO TELÃO COM ESTILO NOTURNO SUPREMO */
         #map-telao-container {
             width: 100%;
             height: 100%;
@@ -186,7 +180,7 @@
             border-radius: 1rem;
             overflow: hidden;
         }
-        .leaflet-tile { filter: invert(90%) hue-rotate(180deg) brightness(0.9) contrast(1.1); }
+        .leaflet-tile { filter: invert(100%) hue-rotate(180deg) brightness(0.7) contrast(1.3); }
 
         /* ALERTA DE BUZINA */
         #alerta-buzina {
@@ -485,7 +479,7 @@
             </div>
         </section>
 
-        <!-- 4. CARD DE STATUS & LINHA DO TEMPO (5 ETAPAS COM PROCURANDO MOTOBOY) -->
+        <!-- 4. CARD DE STATUS & LINHA DO TEMPO (5 ETAPAS) -->
         <main id="cardStatus" class="glass-card rounded-3xl p-8 shadow-2xl border border-emerald-500/25 relative overflow-hidden flex flex-col gap-6">
             <div class="flex items-center justify-between">
                 <div>
@@ -528,7 +522,7 @@
             </div>
         </main>
 
-        <!-- 5. TELÃO DE PUBLICIDADE SUPREME (COM SUPORTE AO RADAR DE BUSCA) -->
+        <!-- 5. TELÃO DE PUBLICIDADE SUPREME -->
         <section class="glass-card rounded-3xl p-6 shadow-2xl border border-amber-500/30 flex flex-col gap-4">
             <div class="flex items-center justify-between">
                 <h3 class="text-sm font-orbitron font-bold text-amber-400 tracking-wider flex items-center gap-2">
@@ -629,6 +623,7 @@
         let adsCache = [];
         let adIndex = 0;
         let timerCarrossel = null;
+        let timerSimulacaoProcurando = null;
 
         const AUDIO_BUZINA_URL = "https://raw.githubusercontent.com/pradodalapa-hue/fotos-industrial/main/media/jdp_1781371308253_Buzina_marca_BZM_para_Motos_1_tom_MP3_160K_.mp3"; 
         const audioBuzinaElement = new Audio(AUDIO_BUZINA_URL);
@@ -814,6 +809,7 @@
             if (refPendente) refPendente.off();
             if (refRastreio) refRastreio.off();
             if (refConcluido) refConcluido.off();
+            if (timerSimulacaoProcurando) clearTimeout(timerSimulacaoProcurando);
             dadosPendente = null; dadosRastreio = null; dadosConcluido = null;
             ultimoStatusProcessado = "";
         }
@@ -833,6 +829,19 @@
                 statusAtual = "PROCURANDO";
                 exibirEstadoProcurando();
             } else if ((dadosPendente && dadosPendente.status === "PRONTO") || (dadosRastreio && (dadosRastreio.status === "PRONTO_PARA_ENTREGA" || dadosRastreio.status === "PRONTO"))) {
+                // GATILHO AUTOMÁTICO EXATO DE 1 MINUTO PARA MUDAR DE PRONTO PARA PROCURANDO MOTOBOY
+                if (!dadosRastreio || !dadosRastreio.na_pista) {
+                    if (!timerSimulacaoProcurando) {
+                        timerSimulacaoProcurando = setTimeout(() => {
+                            if (dadosRastreio) {
+                                dadosRastreio.status = "procurando_motoboy";
+                            } else {
+                                dadosRastreio = { status: "procurando_motoboy" };
+                            }
+                            processarFusaoDeEstados();
+                        }, 60000); // Exatamente 60 segundos (1 minuto)
+                    }
+                }
                 statusAtual = "PRONTO";
                 exibirEstadoPronto();
             } else if (dadosPendente && (dadosPendente.status === "ESPERA" || dadosPendente.status === "PREPARANDO" || dadosPendente.status === "Pendente")) {
@@ -859,13 +868,13 @@
             const holder = document.getElementById('midiaHolder');
 
             if (status === "PRONTO") {
-                if (badgeTelao) badgeTelao.innerText = "Modo: Pedido Pronto";
+                if (badgeTelao) badgeTelao.innerText = "Modo: Pedido Pronto (1 Minuto)";
                 if (timerCarrossel) clearInterval(timerCarrossel);
                 if (holder) {
                     holder.innerHTML = `<video src="${URL_PRONTO}" autoplay loop muted playsinline class="w-full h-full object-contain bg-black"></video>`;
                 }
             } else if (status === "PROCURANDO") {
-                if (badgeTelao) badgeTelao.innerText = "Modo: Procurando Motoboy (Radar)";
+                if (badgeTelao) badgeTelao.innerText = "Modo: Procurando Motoboy (Radar Noturno)";
                 if (timerCarrossel) clearInterval(timerCarrossel);
                 if (holder) {
                     holder.innerHTML = `<div id="map-telao-container"></div>`;
@@ -1009,7 +1018,7 @@
             document.getElementById('txtStatusDetalhe').innerText = "PEDIDO NÃO LOCALIZADO";
         }
 
-        // --- MAPA COM RADAR PULSANTE AUTOMÁTICO ---
+        // --- MAPA COM RADAR NOTURNO E ZOOM AUTOMÁTICO ---
         function inicializarMapaRadarNoTelao() {
             setTimeout(() => {
                 if (map) {
@@ -1019,21 +1028,19 @@
                     mapaInicializado = false;
                 }
 
-                // Coordenadas da Loja em Manaus como centro do radar
                 map = L.map('map-telao-container', { zoomControl: false, attributionControl: false }).setView([-2.9903, -60.0673], 15);
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-                // Adiciona o elemento visual de radar pulsante no centro do mapa
                 const radarIcon = L.divIcon({
-                    html: `<div style="position:relative; width:90px; height:90px;"><div class="radar-pulse-ring"></div><div class="radar-pulse-ring" style="animation-delay: 1.1s;"></div><div style="position:absolute; top:35px; left:35px; width:20px; height:20px; background:#facc15; border-radius:50%; box-shadow:0 0 15px #facc15;"></div></div>`,
-                    iconSize: [90, 90],
-                    iconAnchor: [45, 45]
+                    html: `<div style="position:relative; width:120px; height:120px;"><div class="radar-pulse-ring"></div><div class="radar-pulse-ring" style="animation-delay: 1.1s;"></div><div style="position:absolute; top:48px; left:48px; width:24px; height:24px; background:#facc15; border-radius:50%; box-shadow:0 0 20px #facc15; border: 2px solid #000;"></div></div>`,
+                    iconSize: [120, 120],
+                    iconAnchor: [60, 60]
                 });
                 L.marker([-2.9903, -60.0673], { icon: radarIcon }).addTo(map);
 
-                // Efeito de zoom automático oscilando simulando varredura
-                setTimeout(() => { if(map) map.setZoom(16, {animate: true}); }, 1500);
-                setTimeout(() => { if(map) map.setZoom(14, {animate: true}); }, 4000);
+                // Zoom suave simulando a varredura e descida do radar noturno
+                setTimeout(() => { if(map) map.setZoom(16, {animate: true}); }, 1200);
+                setTimeout(() => { if(map) map.setZoom(14, {animate: true}); }, 3800);
 
                 map.invalidateSize();
             }, 300);

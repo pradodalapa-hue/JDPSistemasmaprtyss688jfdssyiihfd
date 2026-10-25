@@ -2,7 +2,7 @@
 <html lang="pt-BR" class="dark">
 <head>
     <meta charset="UTF-8">
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>DONY BURGUER'S - RASTREIO SUPREMO VERTICAL</title>
     
     <!-- Tailwind CSS -->
@@ -91,15 +91,15 @@
             box-shadow: 0 0 30px rgba(16, 185, 129, 0.6);
         }
 
-        /* MAPA EM TELA CHEIA AUTOMÁTICO */
-        #map-container-wrapper {
-            position: fixed;
-            inset: 0;
-            z-index: 999999;
-            display: none;
-            background: #020617;
+        /* MAPA DENTRO DO TELÃO */
+        #map-telao-container {
+            width: 100%;
+            height: 100%;
+            min-height: 380px;
+            position: relative;
+            border-radius: 1rem;
+            overflow: hidden;
         }
-        #map { width: 100%; height: 100%; }
         .leaflet-tile { filter: invert(90%) hue-rotate(180deg) brightness(0.9) contrast(1.1); }
 
         /* ALERTA DE BUZINA */
@@ -383,10 +383,6 @@
 
         <!-- 3. DETALHES E STATUS DO PEDIDO -->
         <section class="glass-card rounded-3xl p-6 shadow-2xl border border-emerald-500/20 flex flex-col gap-6">
-            <button id="btnMapa" onclick="abrirMapaModoTela()" class="green-gradient-btn w-full py-5 rounded-2xl text-slate-950 font-black text-base tracking-wider flex items-center justify-center gap-3 uppercase shadow-green-glow font-orbitron" style="display: none;">
-                <i class="fas fa-map-marked-alt text-xl"></i> ABRIR MAPA EM TEMPO REAL
-            </button>
-
             <div class="flex flex-col gap-3.5 text-sm bg-slate-950/60 p-5 rounded-2xl border border-white/5">
                 <div class="flex justify-between items-center border-b border-gray-800/80 pb-3">
                     <span class="text-gray-400 font-medium">Status do Sistema:</span>
@@ -442,7 +438,7 @@
             </div>
         </main>
 
-        <!-- 5. TELÃO DE PUBLICIDADE SUPREME (PRADO_68 + VÍDEOS DE COZINHA E PRONTO) -->
+        <!-- 5. TELÃO DE PUBLICIDADE SUPREME (COZINHA, PRONTO, MAPA EM ROTA E PRADO_68) -->
         <section class="glass-card rounded-3xl p-6 shadow-2xl border border-amber-500/30 flex flex-col gap-4">
             <div class="flex items-center justify-between">
                 <h3 class="text-sm font-orbitron font-bold text-amber-400 tracking-wider flex items-center gap-2">
@@ -521,14 +517,6 @@
 
     </div>
 
-    <!-- TELA DE MAPA EM TELA CHEIA AUTOMÁTICA -->
-    <div id="map-container-wrapper">
-        <button onclick="fecharMapaModoTela()" class="absolute top-6 left-6 z-[9999999] bg-slate-950/90 border-2 border-cyan-400 text-cyan-400 px-5 py-3 rounded-xl font-orbitron text-xs font-bold flex items-center gap-3 shadow-lg hover:bg-slate-900 transition">
-            <i class="fas fa-arrow-left"></i> VOLTAR AO PAINEL DE STATUS
-        </button>
-        <div id="map"></div>
-    </div>
-
     <!-- JAVASCRIPT INTEGRADO -->
     <script>
         const firebaseConfig = { databaseURL: "https://dony-burguers-default-rtdb.firebaseio.com" };
@@ -551,7 +539,6 @@
 
         let map = null, markerMotoboy = null;
         let mapaInicializado = false;
-        let mapaAbertoAutomaticamente = false;
 
         let adsCache = [];
         let adIndex = 0;
@@ -654,7 +641,6 @@
             idPedidoBuscado = id.replace('#', '').trim();
             input.value = '#' + idPedidoBuscado;
             window.history.replaceState({}, '', `?pedido=${idPedidoBuscado}`);
-            mapaAbertoAutomaticamente = false;
             iniciarEscutaFirebase(idPedidoBuscado);
             iniciarCicloDoisMinutos();
         }
@@ -781,7 +767,7 @@
         }
 
         // ===================================================================
-        // 🚨 FUNÇÃO DE ALTERNÂNCIA E INJEÇÃO DOS VÍDEOS NO TELÃO 🚨
+        // 🚨 FUNÇÃO DE ALTERNÂNCIA E INJEÇÃO NO TELÃO (COZINHA, PRONTO, MAPA, ADS) 🚨
         // ===================================================================
         function atualizarTelaoPorStatus(status) {
             const badgeTelao = document.getElementById('statusTelaoBadge');
@@ -791,25 +777,22 @@
                 if (badgeTelao) badgeTelao.innerText = "Modo: Pedido Pronto";
                 if (timerCarrossel) clearInterval(timerCarrossel);
                 if (holder) {
-                    // EXIBE O VÍDEO DE PEDIDO PRONTO EM LOOP
                     holder.innerHTML = `<video src="${URL_PRONTO}" autoplay loop muted playsinline class="w-full h-full object-contain bg-black"></video>`;
                 }
             } else if (status === "EM_ROTA") {
-                if (badgeTelao) badgeTelao.innerText = "Modo: Motoboy em Rota (Mapa Automático Ativo)";
-                // ABRE O MAPA AUTOMATICAMENTE NA ROTA DO MOTOBOY
-                if (!mapaAbertoAutomaticamente) {
-                    mapaAbertoAutomaticamente = true;
-                    abrirMapaModoTela();
+                if (badgeTelao) badgeTelao.innerText = "Modo: Motoboy em Rota (Mapa no Telão)";
+                if (timerCarrossel) clearInterval(timerCarrossel);
+                if (holder) {
+                    holder.innerHTML = `<div id="map-telao-container"></div>`;
+                    inicializarMapaNoTelao();
                 }
             } else if (status === "PREPARANDO") {
                 if (badgeTelao) badgeTelao.innerText = "Modo: Cozinha";
                 if (timerCarrossel) clearInterval(timerCarrossel);
                 if (holder) {
-                    // EXIBE O VÍDEO DA COZINHA EM LOOP
                     holder.innerHTML = `<video src="${URL_COZINHA}" autoplay loop muted playsinline class="w-full h-full object-contain bg-black"></video>`;
                 }
             } else {
-                // Sem pedido ativo ou Inexistente -> Roda o carrossel de publicidade do Firebase (prado_68)
                 if (badgeTelao) badgeTelao.innerText = "Modo: Publicidade Pradão (68)";
                 if (!timerCarrossel && adsCache.length > 0) {
                     motorPublicidadePrado68();
@@ -836,7 +819,6 @@
             document.getElementById('badgeDisplay').innerHTML = '<span class="w-3 h-3 rounded-full bg-yellow-400 animate-pulse"></span> COZINHA';
             document.getElementById('badgeDisplay').className = "px-5 py-2 rounded-full bg-yellow-500/10 border border-yellow-500/40 text-yellow-400 font-extrabold text-sm tracking-widest uppercase flex items-center gap-2 font-orbitron shadow-gold-glow";
             document.getElementById('txtStatusDetalhe').innerText = "EM PREPARAÇÃO NA COZINHA";
-            document.getElementById('btnMapa').style.display = "none";
             atualizarStepper(25, 'bg-yellow-500 text-slate-950 shadow-md', 'bg-gray-800 text-gray-500', 'bg-gray-800 text-gray-400', 'bg-gray-800 text-gray-500');
         }
 
@@ -845,7 +827,6 @@
             document.getElementById('badgeDisplay').innerHTML = '<span class="w-3 h-3 rounded-full bg-cyan-400 animate-pulse"></span> PRONTO';
             document.getElementById('badgeDisplay').className = "px-5 py-2 rounded-full bg-cyan-500/10 border border-cyan-500/40 text-cyan-400 font-extrabold text-sm tracking-widest uppercase flex items-center gap-2 font-orbitron";
             document.getElementById('txtStatusDetalhe').innerText = "PRONTO PARA DESPACHO";
-            document.getElementById('btnMapa').style.display = "none";
             atualizarStepper(60, 'bg-yellow-500 text-slate-950 shadow-md', 'bg-yellow-500 text-slate-950 shadow-md', 'bg-gray-800 text-gray-400', 'bg-gray-800 text-gray-500');
         }
 
@@ -854,7 +835,6 @@
             document.getElementById('badgeDisplay').innerHTML = '<span class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></span> A CAMINHO';
             document.getElementById('badgeDisplay').className = "px-5 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/40 text-emerald-400 font-extrabold text-sm tracking-widest uppercase flex items-center gap-2 font-orbitron shadow-green-glow";
             document.getElementById('txtStatusDetalhe').innerText = "EM ROTA DE ENTREGA";
-            document.getElementById('btnMapa').style.display = "flex";
             atualizarStepper(85, 'bg-yellow-500 text-slate-950 shadow-md', 'bg-yellow-500 text-slate-950 shadow-md', 'bg-emerald-500 text-slate-950 shadow-green-glow animate-pulse', 'bg-gray-800 text-gray-500');
         }
 
@@ -863,7 +843,6 @@
             document.getElementById('badgeDisplay').innerHTML = '<span class="w-3 h-3 rounded-full bg-gray-500"></span> ENTREGUE';
             document.getElementById('badgeDisplay').className = "px-5 py-2 rounded-full bg-slate-800 border border-slate-700 text-gray-400 font-extrabold text-sm tracking-widest uppercase flex items-center gap-2 font-orbitron";
             document.getElementById('txtStatusDetalhe').innerText = "PEDIDO CONCLUÍDO";
-            document.getElementById('btnMapa').style.display = "none";
             atualizarStepper(100, 'bg-yellow-500 text-slate-950', 'bg-yellow-500 text-slate-950', 'bg-emerald-500 text-slate-950', 'bg-emerald-500 text-slate-950');
         }
 
@@ -872,7 +851,6 @@
             document.getElementById('badgeDisplay').innerHTML = '<span class="w-3 h-3 rounded-full bg-red-500 animate-pulse"></span> PAGAMENTO';
             document.getElementById('badgeDisplay').className = "px-5 py-2 rounded-full bg-red-500/10 border border-red-500/40 text-red-400 font-extrabold text-sm tracking-widest uppercase flex items-center gap-2 font-orbitron";
             document.getElementById('txtStatusDetalhe').innerText = "AGUARDANDO PAGAMENTO";
-            document.getElementById('btnMapa').style.display = "none";
         }
 
         function exibirEstadoInexistente() {
@@ -880,59 +858,57 @@
             document.getElementById('badgeDisplay').innerHTML = '<span class="w-3 h-3 rounded-full bg-red-500"></span> NÃO ENCONTRADO';
             document.getElementById('badgeDisplay').className = "px-5 py-2 rounded-full bg-red-500/10 border border-red-500/40 text-red-400 font-extrabold text-sm tracking-widest uppercase flex items-center gap-2 font-orbitron";
             document.getElementById('txtStatusDetalhe').innerText = "PEDIDO NÃO LOCALIZADO";
-            document.getElementById('btnMapa').style.display = "none";
         }
 
-        // --- MAPA LEAFLET E TELEMETRIA ---
-        function inicializarMapaEngine() {
-            if (mapaInicializado) return;
-            mapaInicializado = true;
+        // --- MAPA LEAFLET RENDERIZADO DIRETAMENTE NO TELÃO ---
+        function inicializarMapaNoTelao() {
+            setTimeout(() => {
+                if (map) {
+                    map.remove();
+                    map = null;
+                    markerMotoboy = null;
+                    mapaInicializado = false;
+                }
 
-            map = L.map('map', { zoomControl: true, attributionControl: false }).setView([-2.9903, -60.0673], 15);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+                map = L.map('map-telao-container', { zoomControl: true, attributionControl: false }).setView([-2.9903, -60.0673], 15);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+                mapaInicializado = true;
 
-            db.ref(`lojas/${LOJA_ID}/motoboy_status`).on('value', snap => {
-                const pos = snap.val();
-                if (pos && pos.online) {
-                    const bearing = pos.bearing || 0;
-                    const imgDireita = "https://raw.githubusercontent.com/pradodalapa-hue/fotos-industrial/main/img/jdp_1781366116603_1001229381.png";
-                    const imgEsquerda = "https://raw.githubusercontent.com/pradodalapa-hue/fotos-industrial/main/img/jdp_1781368263004_Engenheiro_Transparente.png";
-                    let imgAtiva = bearing > 180 && bearing <= 360 ? imgEsquerda : imgDireita;
-                    const iconHtml = `<img src="${imgAtiva}" style="width: 42px; height: 42px; filter: drop-shadow(0 0 8px rgba(6,182,212,0.95)); display: block;">`;
-                    
-                    if (!markerMotoboy) {
-                        markerMotoboy = L.marker([pos.latitude, pos.longitude], {
-                            icon: L.divIcon({ html: iconHtml, iconSize: [42, 42], iconAnchor: [21, 21] })
-                        }).addTo(map);
-                    } else {
-                        markerMotoboy.setLatLng([pos.latitude, pos.longitude]);
-                        markerMotoboy.setIcon(L.divIcon({ html: iconHtml, iconSize: [42, 42], iconAnchor: [21, 21] }));
+                db.ref(`lojas/${LOJA_ID}/motoboy_status`).on('value', snap => {
+                    const pos = snap.val();
+                    if (pos && pos.online && map) {
+                        const bearing = pos.bearing || 0;
+                        const imgDireita = "https://raw.githubusercontent.com/pradodalapa-hue/fotos-industrial/main/img/jdp_1781366116603_1001229381.png";
+                        const imgEsquerda = "https://raw.githubusercontent.com/pradodalapa-hue/fotos-industrial/main/img/jdp_1781368263004_Engenheiro_Transparente.png";
+                        let imgAtiva = bearing > 180 && bearing <= 360 ? imgEsquerda : imgDireita;
+                        const iconHtml = `<img src="${imgAtiva}" style="width: 42px; height: 42px; filter: drop-shadow(0 0 8px rgba(6,182,212,0.95)); display: block;">`;
+                        
+                        if (!markerMotoboy) {
+                            markerMotoboy = L.marker([pos.latitude, pos.longitude], {
+                                icon: L.divIcon({ html: iconHtml, iconSize: [42, 42], iconAnchor: [21, 21] })
+                            }).addTo(map);
+                        } else {
+                            markerMotoboy.setLatLng([pos.latitude, pos.longitude]);
+                            markerMotoboy.setIcon(L.divIcon({ html: iconHtml, iconSize: [42, 42], iconAnchor: [21, 21] }));
+                        }
+                        map.panTo([pos.latitude, pos.longitude]);
                     }
-                    map.panTo([pos.latitude, pos.longitude]);
-                }
-            });
+                });
 
-            let ultimoBuzinar = null;
-            db.ref(`lojas/${LOJA_ID}/motoboy_status/buzina_trigger`).on('value', snap => {
-                const val = snap.val();
-                if (val && val !== ultimoBuzinar) {
-                    ultimoBuzinar = val;
-                    audioBuzinaElement.play().catch(() => {});
-                    const alerta = document.getElementById('alerta-buzina');
-                    alerta.classList.add('active');
-                    setTimeout(() => alerta.classList.remove('active'), 4000);
-                }
-            });
-        }
+                let ultimoBuzinar = null;
+                db.ref(`lojas/${LOJA_ID}/motoboy_status/buzina_trigger`).on('value', snap => {
+                    const val = snap.val();
+                    if (val && val !== ultimoBuzinar) {
+                        ultimoBuzinar = val;
+                        audioBuzinaElement.play().catch(() => {});
+                        const alerta = document.getElementById('alerta-buzina');
+                        alerta.classList.add('active');
+                        setTimeout(() => alerta.classList.remove('active'), 4000);
+                    }
+                });
 
-        function abrirMapaModoTela() {
-            document.getElementById('map-container-wrapper').style.display = "block";
-            inicializarMapaEngine();
-            setTimeout(() => { if (map) map.invalidateSize(); }, 150);
-        }
-
-        function fecharMapaModoTela() {
-            document.getElementById('map-container-wrapper').style.display = "none";
+                map.invalidateSize();
+            }, 300);
         }
 
         // --- MOTOR DE PUBLICIDADE PRADO_68 ---

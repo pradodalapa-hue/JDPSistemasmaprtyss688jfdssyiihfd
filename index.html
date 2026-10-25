@@ -96,6 +96,12 @@
             box-shadow: 0 0 30px rgba(16, 185, 129, 0.6);
         }
 
+        /* REMOVE O FUNDO BRANCO PADRÃO DOS MARCADORES DO LEAFLET */
+        .leaflet-div-icon {
+            background: transparent !important;
+            border: none !important;
+        }
+
         /* ANIMAÇÕES SUPREMAS DE STEPPER E RADAR NOTURNO */
         @keyframes sacudirLado {
             0% { transform: translateX(0); }
@@ -1018,7 +1024,7 @@
             document.getElementById('txtStatusDetalhe').innerText = "PEDIDO NÃO LOCALIZADO";
         }
 
-        // --- MAPA COM RADAR NOTURNO E ZOOM AUTOMÁTICO ---
+        // --- MAPA COM RADAR NOTURNO E ZOOM AUTOMÁTICO (SEM FUNDO BRANCO) ---
         function inicializarMapaRadarNoTelao() {
             setTimeout(() => {
                 if (map) {
@@ -1032,13 +1038,13 @@
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
                 const radarIcon = L.divIcon({
-                    html: `<div style="position:relative; width:120px; height:120px;"><div class="radar-pulse-ring"></div><div class="radar-pulse-ring" style="animation-delay: 1.1s;"></div><div style="position:absolute; top:48px; left:48px; width:24px; height:24px; background:#facc15; border-radius:50%; box-shadow:0 0 20px #facc15; border: 2px solid #000;"></div></div>`,
+                    className: 'leaflet-div-icon', // Força transparência total no Leaflet
+                    html: `<div style="position:relative; width:120px; height:120px; background:transparent;"><div class="radar-pulse-ring"></div><div class="radar-pulse-ring" style="animation-delay: 1.1s;"></div><div style="position:absolute; top:48px; left:48px; width:24px; height:24px; background:#facc15; border-radius:50%; box-shadow:0 0 20px #facc15; border: 2px solid #000;"></div></div>`,
                     iconSize: [120, 120],
                     iconAnchor: [60, 60]
                 });
                 L.marker([-2.9903, -60.0673], { icon: radarIcon }).addTo(map);
 
-                // Zoom suave simulando a varredura e descida do radar noturno
                 setTimeout(() => { if(map) map.setZoom(16, {animate: true}); }, 1200);
                 setTimeout(() => { if(map) map.setZoom(14, {animate: true}); }, 3800);
 
@@ -1066,15 +1072,17 @@
                         const imgDireita = "https://raw.githubusercontent.com/pradodalapa-hue/fotos-industrial/main/img/jdp_1781366116603_1001229381.png";
                         const imgEsquerda = "https://raw.githubusercontent.com/pradodalapa-hue/fotos-industrial/main/img/jdp_1781368263004_Engenheiro_Transparente.png";
                         let imgAtiva = bearing > 180 && bearing <= 360 ? imgEsquerda : imgDireita;
-                        const iconHtml = `<img src="${imgAtiva}" style="width: 42px; height: 42px; filter: drop-shadow(0 0 8px rgba(6,182,212,0.95)); display: block;">`;
+                        
+                        // Garante fundo transparente no ícone da moto
+                        const iconHtml = `<div style="background:transparent; display:inline-block;"><img src="${imgAtiva}" style="width: 42px; height: 42px; filter: drop-shadow(0 0 8px rgba(6,182,212,0.95)); display: block; background:transparent;"></div>`;
                         
                         if (!markerMotoboy) {
                             markerMotoboy = L.marker([pos.latitude, pos.longitude], {
-                                icon: L.divIcon({ html: iconHtml, iconSize: [42, 42], iconAnchor: [21, 21] })
+                                icon: L.divIcon({ className: 'leaflet-div-icon', html: iconHtml, iconSize: [42, 42], iconAnchor: [21, 21] })
                             }).addTo(map);
                         } else {
                             markerMotoboy.setLatLng([pos.latitude, pos.longitude]);
-                            markerMotoboy.setIcon(L.divIcon({ html: iconHtml, iconSize: [42, 42], iconAnchor: [21, 21] }));
+                            markerMotoboy.setIcon(L.divIcon({ className: 'leaflet-div-icon', html: iconHtml, iconSize: [42, 42], iconAnchor: [21, 21] }));
                         }
                         map.panTo([pos.latitude, pos.longitude]);
                     }

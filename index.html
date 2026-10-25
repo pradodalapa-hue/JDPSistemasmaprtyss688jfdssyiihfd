@@ -112,19 +112,35 @@
             100% { box-shadow: 0 0 0 0 rgba(234, 179, 8, 0); }
         }
 
-        @keyframes barraVaiVem {
-            0% { width: 10%; left: 0%; }
-            50% { width: 90% ; left: 10%; }
-            100% { width: 20%; left: 80%; }
+        /* 3 FASES LENTAS DE VAI E VEM DENTRO DO LIMITE DE CADA ETAPA */
+        @keyframes vaiVemFaseCozinha {
+            0% { width: 5%; }
+            33% { width: 23%; }
+            66% { width: 12%; }
+            100% { width: 23%; }
+        }
+
+        @keyframes vaiVemFasePronto {
+            0% { width: 30%; }
+            33% { width: 58%; }
+            66% { width: 42% ; }
+            100% { width: 58%; }
+        }
+
+        @keyframes vaiVemFaseRota {
+            0% { width: 65%; }
+            33% { width: 88%; }
+            66% { width: 72%; }
+            100% { width: 88%; }
         }
 
         .animar-sacodir {
             animation: sacudirLado 0.6s ease-in-out infinite, pulsoExpandir 1.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
 
-        .animar-barra-fluida {
-            animation: barraVaiVem 3s ease-in-out infinite alternate !important;
-        }
+        .animar-cozinha { animation: vaiVemFaseCozinha 6s ease-in-out infinite alternate; }
+        .animar-pronto  { animation: vaiVemFasePronto 6s ease-in-out infinite alternate; }
+        .animar-rota    { animation: vaiVemFaseRota 6s ease-in-out infinite alternate; }
 
         /* MAPA DENTRO DO TELÃO */
         #map-telao-container {
@@ -447,7 +463,7 @@
                 </div>
             </div>
 
-            <!-- STEPPER / LINHA DO TEMPO COM ANIMAÇÃO -->
+            <!-- STEPPER / LINHA DO TEMPO COM LIMITES E 3 FASES -->
             <div class="px-2">
                 <div class="relative flex items-center justify-between">
                     <div class="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1.5 bg-gray-800 z-0"></div>
@@ -832,14 +848,16 @@
             audioSinoElement.play().catch(err => {});
         }
 
-        function atualizarStepper(progresso, s1, s2, s3, s4, barraFluida = false) {
+        function atualizarStepper(s1, s2, s3, s4, classeAnimacaoBarra = "") {
             const barraEl = document.getElementById('barraProgresso');
-            barraEl.style.width = progresso + '%';
             
-            if (barraFluida) {
-                barraEl.classList.add('animar-barra-fluida');
+            // Remove classes anteriores de animação da barra
+            barraEl.classList.remove('animar-cozinha', 'animar-pronto', 'animar-rota');
+
+            if (classeAnimacaoBarra) {
+                barraEl.classList.add(classeAnimacaoBarra);
             } else {
-                barraEl.classList.remove('animar-barra-fluida');
+                barraEl.style.width = '100%';
             }
 
             document.getElementById('step1').className = `w-10 h-10 rounded-full font-black text-sm flex items-center justify-center ring-4 ring-slate-900 ${s1}`;
@@ -855,12 +873,11 @@
             document.getElementById('txtStatusDetalhe').innerText = "EM PREPARAÇÃO NA COZINHA";
             
             atualizarStepper(
-                25, 
                 'bg-yellow-500 text-slate-950 shadow-md animar-sacodir', 
                 'bg-gray-800 text-gray-500', 
                 'bg-gray-800 text-gray-400', 
                 'bg-gray-800 text-gray-500',
-                true
+                'animar-cozinha'
             );
         }
 
@@ -871,12 +888,11 @@
             document.getElementById('txtStatusDetalhe').innerText = "PRONTO PARA DESPACHO";
             
             atualizarStepper(
-                60, 
                 'bg-yellow-500 text-slate-950 shadow-md', 
                 'bg-cyan-400 text-slate-950 shadow-md animar-sacodir', 
                 'bg-gray-800 text-gray-400', 
                 'bg-gray-800 text-gray-500',
-                true
+                'animar-pronto'
             );
         }
 
@@ -887,12 +903,11 @@
             document.getElementById('txtStatusDetalhe').innerText = "EM ROTA DE ENTREGA";
             
             atualizarStepper(
-                85, 
                 'bg-yellow-500 text-slate-950 shadow-md', 
                 'bg-yellow-500 text-slate-950 shadow-md', 
                 'bg-emerald-500 text-slate-950 shadow-green-glow animar-sacodir', 
                 'bg-gray-800 text-gray-500',
-                true
+                'animar-rota'
             );
         }
 
@@ -903,12 +918,11 @@
             document.getElementById('txtStatusDetalhe').innerText = "PEDIDO CONCLUÍDO";
             
             atualizarStepper(
-                100, 
                 'bg-yellow-500 text-slate-950', 
                 'bg-yellow-500 text-slate-950', 
                 'bg-emerald-500 text-slate-950', 
                 'bg-emerald-500 text-slate-950 animar-sacodir',
-                false
+                ''
             );
         }
 

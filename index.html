@@ -2,7 +2,7 @@
 <html lang="pt-BR" class="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
     <!-- TAGS CRÍTICAS PARA O WHATSAPP MOSTRAR A FOTO -->
     <meta property="og:title" content="ACOMPANHE SEU PEDIDO!">
     <meta property="og:description" content="Assista filme videos musica acompanhando a entrega do seu pedido.">
@@ -96,7 +96,7 @@
             box-shadow: 0 0 30px rgba(16, 185, 129, 0.6);
         }
 
-        /* REMOVE O FUNDO BRANCO PADRÃO DOS MARCADORES DO LEAFLET */
+        /* REMOVE TOTALMENTE O FUNDO BRANCO DOS MARCADORES DO LEAFLET */
         .leaflet-div-icon {
             background: transparent !important;
             border: none !important;
@@ -133,7 +133,7 @@
             margin-top: -60px;
             border-radius: 50%;
             border: 3px solid #facc15;
-            background: rgba(250, 204, 21, 0.15);
+            background: rgba(250, 204, 21, 0.2);
             animation: radarOndas 2.2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
             pointer-events: none;
             z-index: 1000;
@@ -177,7 +177,7 @@
         .animar-procurando  { animation: vaiVemFaseProcurando 6s ease-in-out infinite alternate; }
         .animar-rota        { animation: vaiVemFaseRota 6s ease-in-out infinite alternate; }
 
-        /* MAPA DENTRO DO TELÃO COM ESTILO NOTURNO SUPREMO */
+        /* MAPA DENTRO DO TELÃO COM ESTILO NOTURNO NATIVO */
         #map-telao-container {
             width: 100%;
             height: 100%;
@@ -185,8 +185,8 @@
             position: relative;
             border-radius: 1rem;
             overflow: hidden;
+            background: #090d16;
         }
-        .leaflet-tile { filter: invert(100%) hue-rotate(180deg) brightness(0.7) contrast(1.3); }
 
         /* ALERTA DE BUZINA */
         #alerta-buzina {
@@ -927,7 +927,7 @@
             document.getElementById('step2').className = `w-9 h-9 rounded-full font-black text-xs flex items-center justify-center ring-4 ring-slate-900 ${s2}`;
             document.getElementById('step3').className = `w-10 h-10 rounded-full font-black text-xs flex items-center justify-center ring-4 ring-slate-900 ${s3}`;
             document.getElementById('step4').className = `w-11 h-11 rounded-full font-black text-base flex items-center justify-center ring-4 ring-slate-900 ${s4}`;
-            document.getElementById('step5').className = `w-9 h-9 rounded-full font-bold text-xs flex items-center justify-center ring-4 ring-slate-900 ${s5}`;
+            document.getElementById('step5').className = `w-9 h-9 rounded-full font-bold text-xs flex items-center justify-center ring-4 ring-slate-900 border border-gray-700 ${s5}`;
         }
 
         function exibirEstadoPedidoAceito() {
@@ -1024,7 +1024,7 @@
             document.getElementById('txtStatusDetalhe').innerText = "PEDIDO NÃO LOCALIZADO";
         }
 
-        // --- MAPA COM RADAR NOTURNO E ZOOM AUTOMÁTICO (SEM FUNDO BRANCO) ---
+        // --- MAPA COM TEMA ESCURO NATIVO (CARTO DB DARK MATTER) ---
         function inicializarMapaRadarNoTelao() {
             setTimeout(() => {
                 if (map) {
@@ -1035,10 +1035,15 @@
                 }
 
                 map = L.map('map-telao-container', { zoomControl: false, attributionControl: false }).setView([-2.9903, -60.0673], 15);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+                
+                // Usando o CartoDB Dark Matter para ruas e nomes ficarem perfeitamente visíveis em modo escuro
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                    maxZoom: 19,
+                    subdomains: 'abcd'
+                }).addTo(map);
 
                 const radarIcon = L.divIcon({
-                    className: 'leaflet-div-icon', // Força transparência total no Leaflet
+                    className: 'leaflet-div-icon',
                     html: `<div style="position:relative; width:120px; height:120px; background:transparent;"><div class="radar-pulse-ring"></div><div class="radar-pulse-ring" style="animation-delay: 1.1s;"></div><div style="position:absolute; top:48px; left:48px; width:24px; height:24px; background:#facc15; border-radius:50%; box-shadow:0 0 20px #facc15; border: 2px solid #000;"></div></div>`,
                     iconSize: [120, 120],
                     iconAnchor: [60, 60]
@@ -1062,18 +1067,22 @@
                 }
 
                 map = L.map('map-telao-container', { zoomControl: true, attributionControl: false }).setView([-2.9903, -60.0673], 15);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+                
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                    maxZoom: 19,
+                    subdomains: 'abcd'
+                }).addTo(map);
+                
                 mapaInicializado = true;
 
                 db.ref(`lojas/${LOJA_ID}/motoboy_status`).on('value', snap => {
                     const pos = snap.val();
                     if (pos && pos.online && map) {
                         const bearing = pos.bearing || 0;
-                        const imgDireita = "https://raw.githubusercontent.com/pradodalapa-hue/fotos-industrial/main/img/jdp_1781366116603_1001229381.png";
-                        const imgEsquerda = "https://raw.githubusercontent.com/pradodalapa-hue/fotos-industrial/main/img/jdp_1781368263004_Engenheiro_Transparente.png";
+                        const imgDireita = "https://raw.githubusercontent.com/pradodalapa-hue/fotos-industrial/main/img/jdp_1792968319910_1001686632.png";
+                        const imgEsquerda = "https://raw.githubusercontent.com/pradodalapa-hue/fotos-industrial/main/img/jdp_1792968319910_1001686632.png";
                         let imgAtiva = bearing > 180 && bearing <= 360 ? imgEsquerda : imgDireita;
                         
-                        // Garante fundo transparente no ícone da moto
                         const iconHtml = `<div style="background:transparent; display:inline-block;"><img src="${imgAtiva}" style="width: 42px; height: 42px; filter: drop-shadow(0 0 8px rgba(6,182,212,0.95)); display: block; background:transparent;"></div>`;
                         
                         if (!markerMotoboy) {

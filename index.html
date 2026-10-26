@@ -619,14 +619,13 @@
         const LOJA_ID = "LEOVARDIOS_burguer_2026";
 
         const URL_COZINHA = "https://raw.githubusercontent.com/pradodalapa-hue/fotos-industrial/main/media/jdp_1792941913241_jdp_1790805480352_2026-02-12T20-55-09_a_quero_que_você_watermarked(1).mp4";
-
         const URL_PRONTO = "https://raw.githubusercontent.com/pradodalapa-hue/fotos-industrial/main/media/jdp_1792941863788_jdp_1779770754904_074ba93928fc9a05576796f47d810121.mp4";
 
         const urlParams = new URLSearchParams(window.location.search);
         let idPedidoBuscado = urlParams.get('pedido') || "";
 
-        let refPendente = null, refRastreio = null, refConcluido = null;
-        let dadosPendente = null, dadosRastreio = null, dadosConcluido = null;
+        let refPendente = null, refRastreio = null, refConcluido = null, refCancelado = null;
+        let dadosPendente = null, dadosRastreio = null, dadosConcluido = null, dadosCancelado = null;
 
         let map = null, markerMotoboy = null;
         let mapaInicializado = false;
@@ -637,7 +636,6 @@
         let timerSimulacaoProcurando = null;
 
         const AUDIO_BUZINA_URL = "https://raw.githubusercontent.com/pradodalapa-hue/fotos-industrial/main/media/jdp_1781371308253_Buzina_marca_BZM_para_Motos_1_tom_MP3_160K_.mp3";
-
         const audioBuzinaElement = new Audio(AUDIO_BUZINA_URL);
 
         const AUDIO_SINO_URL = "https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c36868e4.mp3?filename=bell-notification-933.mp3";
@@ -811,18 +809,21 @@
             refPendente = db.ref(`lojas/${LOJA_ID}/producao_pendente/${id}`);
             refRastreio = db.ref(`lojas/${LOJA_ID}/rastreio_ativo/${id}`);
             refConcluido = db.ref(`lojas/${LOJA_ID}/pedidos_concluidos/${id}`);
+            refCancelado = db.ref(`lojas/${LOJA_ID}/pedidos_cancelados/${id}`);
 
             refPendente.on('value', snap => { dadosPendente = snap.val(); processarFusaoDeEstados(); });
             refRastreio.on('value', snap => { dadosRastreio = snap.val(); processarFusaoDeEstados(); });
             refConcluido.on('value', snap => { dadosConcluido = snap.val(); processarFusaoDeEstados(); });
+            refCancelado.on('value', snap => { dadosCancelado = snap.val(); processarFusaoDeEstados(); });
         }
 
         function destruirListenersAnteriores() {
             if (refPendente) refPendente.off();
             if (refRastreio) refRastreio.off();
             if (refConcluido) refConcluido.off();
+            if (refCancelado) refCancelado.off();
             if (timerSimulacaoProcurando) clearTimeout(timerSimulacaoProcurando);
-            dadosPendente = null; dadosRastreio = null; dadosConcluido = null;
+            dadosPendente = null; dadosRastreio = null; dadosConcluido = null; dadosCancelado = null;
             ultimoStatusProcessado = "";
         }
 
@@ -831,7 +832,10 @@
 
             let statusAtual = "INEXISTENTE";
 
-            if (dadosConcluido || (dadosRastreio && (dadosRastreio.status === "entregue" || dadosRastreio.status === "CONCLUIDO" || dadosRastreio.expirado === true))) {
+            if (dadosCancelado || (dadosRastreio && dadosRastreio.status === "cancelado")) {
+                statusAtual = "CANCELADO";
+                exibirEstadoCancelado();
+            } else if (dadosConcluido || (dadosRastreio && (dadosRastreio.status === "entregue" || dadosRastreio.status === "CONCLUIDO" || dadosRastreio.expirado === true))) {
                 statusAtual = "CONCLUIDO";
                 exibirEstadoConcluido();
             } else if (dadosRastreio && (dadosRastreio.na_pista === true || dadosRastreio.status === "em_rota")) {
@@ -878,7 +882,13 @@
             const badgeTelao = document.getElementById('statusTelaoBadge');
             const holder = document.getElementById('midiaHolder');
 
-            if (status === "PRONTO") {
+            if (status === "CANCELADO") {
+                if (badgeTelao) badgeTelao.innerText = "Modo: Pedido Cancelado";
+                if (timerCarrossel) clearInterval(timerCarrossel);
+                if (holder) {
+                    holder.innerHTML = `<div class="flex flex-col items-center justify-center text-red-400 p-6"><i class="fas fa-ban text-5xl mb-3"></i><span class="text-sm font-orbitron uppercase tracking-widest font-bold">Este pedido foi cancelado</span></div>`;
+                }
+            } else if (status === "PRONTO") {
                 if (badgeTelao) badgeTelao.innerText = "Modo: Pedido Pronto (1 Minuto)";
                 if (timerCarrossel) clearInterval(timerCarrossel);
                 if (holder) {
@@ -933,6 +943,19 @@
             document.getElementById('step3').className = `w-10 h-10 rounded-full font-black text-xs flex items-center justify-center ring-4 ring-slate-900 ${s3}`;
             document.getElementById('step4').className = `w-11 h-11 rounded-full font-black text-base flex items-center justify-center ring-4 ring-slate-900 ${s4}`;
             document.getElementById('step5').className = `w-9 h-9 rounded-full font-bold text-xs flex items-center justify-center ring-4 ring-slate-900 border border-gray-700 ${s5}`;
+        }
+
+        function exibirEstadoCancelado() {
+            textoMensagemAtual = "PEDIDO CANCELADO";
+            document.getElementById('badgeDisplay').innerHTML = '<span class="w-3 h-3 rounded-full bg-red-500 animate-pulse"></span> CANCELADO';
+            document.getElementById('badgeDisplay').className = "px-5 py-2 rounded-full bg-red-500/10 border border-red-500/40 text-red-400 font-extrabold text-sm tracking-widest uppercase flex items-center gap-2 font-orbitron shadow-lg";
+            document.getElementById('txtStatusDetalhe').innerText = "PEDIDO CANCELADO PELA LOJA/CLIENTE";
+
+            atualizarStepper(
+                'bg-red-600 text-white', 'bg-red-600 text-white', 'bg-red-600 text-white', 'bg-red-600 text-white', 'bg-red-600 text-white', ''
+            );
+            document.getElementById('barraProgresso').style.width = '100%';
+            document.getElementById('barraProgresso').className = 'absolute left-0 top-1/2 -translate-y-1/2 h-1.5 bg-red-600 z-0 transition-all duration-700';
         }
 
         function exibirEstadoPedidoAceito() {
@@ -1173,4 +1196,4 @@
         }
     </script>
 </body>
-                </html>
+</html>
